@@ -6,13 +6,17 @@
 
 (defn seed
   "Create session."
-  [data topic]
+  [data topic query processor language provider]
   (let [repo (repo/repo data)
         id (str (UUID/randomUUID))
         map {:id id
              :topic topic
              :tasks []
-             :created (task/format (task/now))}
+             :created (task/format (task/now))
+             :query query
+             :processor processor
+             :language language
+             :provider provider}
         value (session/session map)]
     (repo/append repo value)
     (println (str "Created session: " (subs id 0 8)))

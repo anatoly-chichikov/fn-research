@@ -12,7 +12,7 @@
             [research.pdf.document.text :as doctext]
             [research.pdf.style :as style])
   (:import (java.nio.file Files LinkOption)))
-(declare author service coverimage brief emit)
+(declare author service coverimage brief emit title)
 (defprotocol Signed
   "Object with author signature."
   (html [item] "Return HTML signature."))
@@ -68,7 +68,7 @@
       (str "<!DOCTYPE html><html lang=\"en\"><head>"
            "<meta charset=\"UTF-8\" />"
            "<title>"
-           (doctext/escape (doctext/heading (sess/topic session)))
+           (doctext/escape (doctext/heading (title session)))
            "</title><style>"
            css
            "</style></head><body>"
@@ -78,7 +78,7 @@
            "<div class=\"intro\">"
            (coverimage item)
            "<div class=\"intro-content\"><h1>"
-           (doctext/escape (doctext/heading (sess/topic session)))
+           (doctext/escape (doctext/heading (title session)))
            "</h1><div class=\"meta\"><p class=\"subtitle\">"
            note
            "</p><p class=\"date\">"
@@ -119,6 +119,22 @@
            (.toString (.toUri (.get cover)))
            "\" alt=\"Cover\" /></div>")
       "")))
+(defn title
+  "Return research title from session topic or brief."
+  [session]
+  (let [topic (sess/topic session)]
+    (if (str/blank? topic)
+      (let [list (sess/tasks session)
+            head (first list)
+            hold (sess/pending session)
+            slot (if (and (not head) (.isPresent hold)) (.get hold) nil)
+            info (cond
+                   head (task/brief head)
+                   slot (pending/brief slot)
+                   :else {})
+            parsed (str (or (:topic info) ""))]
+        (if (str/blank? parsed) "" parsed))
+      topic)))
 (defn brief
   "Render brief section."
   [item]

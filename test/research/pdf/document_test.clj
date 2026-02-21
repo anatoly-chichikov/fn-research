@@ -1295,6 +1295,72 @@
         html (document/brief doc)]
     (is (str/includes? html mark) "Brief did not use task query")))
 
+(deftest the-document-title-prefers-session-topic-over-task-brief
+  (let [rng (gen/ids 18081)
+        day (inc (.nextInt rng 8))
+        hour (inc (.nextInt rng 8))
+        time (str "2026-01-0" day "T0" hour ":00:00")
+        mark (gen/cyrillic rng 6)
+        query (str mark "\nResearch:\n1. " (gen/greek rng 4))
+        entry {:id (gen/uuid rng)
+               :query query
+               :status "completed"
+               :language (gen/cyrillic rng 6)
+               :service "parallel.ai"
+               :created time}
+        raw (gen/armenian rng 6)
+        item (session/session {:topic raw
+                               :tasks [entry]
+                               :created time})
+        head (document/title item)]
+    (is (= raw head)
+        "Title did not prefer session topic over task brief")))
+(deftest the-document-title-prefers-session-topic-over-pending-brief
+  (let [rng (gen/ids 18083)
+        mark (gen/cyrillic rng 6)
+        query (str mark "\nResearch:\n1. " (gen/greek rng 4))
+        raw (gen/armenian rng 6)
+        entry {:run_id (gen/uuid rng)
+               :query query
+               :processor (gen/greek rng 6)
+               :language (gen/cyrillic rng 6)
+               :provider "parallel"}
+        item (session/session {:id (gen/uuid rng)
+                               :topic raw
+                               :tasks []
+                               :created (session/format (session/now))
+                               :pending entry})
+        head (document/title item)]
+    (is (= raw head)
+        "Title did not prefer session topic over pending brief")))
+(deftest the-document-title-falls-back-to-session-topic
+  (let [rng (gen/ids 18085)
+        mark (gen/cyrillic rng 6)
+        item (session/session {:topic mark
+                               :tasks []
+                               :created (session/format (session/now))})
+        head (document/title item)]
+    (is (= mark head)
+        "Title did not fall back to session topic")))
+(deftest the-document-title-falls-back-when-brief-topic-blank
+  (let [rng (gen/ids 18087)
+        day (inc (.nextInt rng 8))
+        hour (inc (.nextInt rng 8))
+        time (str "2026-01-0" day "T0" hour ":00:00")
+        mark (gen/armenian rng 6)
+        query (str "\n1. " (gen/greek rng 4))
+        entry {:id (gen/uuid rng)
+               :query query
+               :status "completed"
+               :language (gen/cyrillic rng 6)
+               :service "parallel.ai"
+               :created time}
+        item (session/session {:topic mark
+                               :tasks [entry]
+                               :created time})
+        head (document/title item)]
+    (is (= mark head)
+        "Title did not fall back when brief topic was blank")))
 (deftest the-document-brief-falls-back-to-topic
   (let [rng (gen/ids 18049)
         day (inc (.nextInt rng 8))

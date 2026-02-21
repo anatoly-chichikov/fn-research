@@ -165,6 +165,24 @@
     (is (= name (pending/provider item))
         "Pending provider did not match provided value")))
 
+(deftest the-pending-prefers-explicit-topic-in-brief
+  (let [rng (gen/ids 13017)
+        run (gen/cyrillic rng 6)
+        mark (gen/hiragana rng 6)
+        query (str (gen/greek rng 6)
+                   "\n\nResearch:\n1. "
+                   (gen/armenian rng 4))
+        item (pending/pending {:run_id run
+                               :query query
+                               :processor (gen/greek rng 6)
+                               :language (gen/cyrillic rng 6)
+                               :provider (gen/cyrillic rng 6)
+                               :topic mark})
+        brief (pending/brief item)
+        topic (:topic brief)]
+    (is (= mark topic)
+        "Pending brief did not use explicit topic")))
+
 (deftest the-pending-serializes-provider
   (let [rng (gen/ids 13015)
         run (gen/cyrillic rng 6)

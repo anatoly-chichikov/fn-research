@@ -210,6 +210,27 @@
                 (str/includes? text second))]
     (is ok "Nested brief was not rendered")))
 
+(deftest the-task-prefers-explicit-topic-in-brief
+  (let [rng (gen/ids 11021)
+        day (inc (.nextInt rng 8))
+        hour (inc (.nextInt rng 8))
+        time (str "2026-01-0" day "T0" hour ":00:00")
+        mark (gen/hiragana rng 6)
+        query (str (gen/greek rng 6)
+                   "\n\nResearch:\n1. "
+                   (gen/armenian rng 4))
+        item (task/task {:id (gen/uuid rng)
+                         :query query
+                         :status (gen/greek rng 6)
+                         :language (gen/cyrillic rng 5)
+                         :service (gen/cyrillic rng 4)
+                         :created time
+                         :topic mark})
+        brief (task/brief item)
+        topic (:topic brief)]
+    (is (= mark topic)
+        "Task brief did not use explicit topic")))
+
 (deftest the-task-deserializes-correctly
   (let [rng (gen/ids 11015)
         day (inc (.nextInt rng 8))

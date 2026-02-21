@@ -13,9 +13,14 @@
   (tasks [item] "Return task list.")
   (created [item] "Return creation time.")
   (pending [item] "Return pending run.")
+  (query [item] "Return research query.")
+  (processor [item] "Return processor name.")
+  (language [item] "Return research language.")
+  (provider [item] "Return provider name.")
   (extend [item value] "Return new session with appended task.")
   (start [item value] "Return session with pending run.")
   (reset [item] "Return session without pending run.")
+  (reconfigure [item opts] "Return session with updated research parameters.")
   (data [item] "Return map representation."))
 
 (defn now
@@ -40,6 +45,10 @@
   (tasks [_] tasks)
   (created [_] (:created data))
   (pending [_] (:pending data))
+  (query [_] (:query data))
+  (processor [_] (:processor data))
+  (language [_] (:language data))
+  (provider [_] (:provider data))
   (extend [_ value]
     (->ResearchSession
      id
@@ -54,10 +63,21 @@
      (assoc data :pending (Optional/of value))))
   (reset [_]
     (->ResearchSession id topic tasks (assoc data :pending (Optional/empty))))
+  (reconfigure [_ opts]
+    (->ResearchSession id topic tasks (merge data opts)))
   (data [_] (let [base {:id id
                         :topic topic
                         :tasks (mapv task/data tasks)
                         :created (format (:created data))}
+                  base (cond-> base
+                         (seq (:query data))
+                         (assoc :query (:query data))
+                         (seq (:processor data))
+                         (assoc :processor (:processor data))
+                         (seq (:language data))
+                         (assoc :language (:language data))
+                         (seq (:provider data))
+                         (assoc :provider (:provider data)))
                   hold (:pending data)
                   pack (if (.isPresent hold)
                          (assoc base :pending (pending/data (.get hold)))
@@ -73,6 +93,10 @@
                (Optional/of (pending/pending (:pending item)))
                (Optional/empty))
         data {:created time
-              :pending hold}
+              :pending hold
+              :query (or (:query item) "")
+              :processor (or (:processor item) "")
+              :language (or (:language item) "")
+              :provider (or (:provider item) "")}
         code (or (:id item) (str (UUID/randomUUID)))]
     (->ResearchSession code (:topic item) list data)))

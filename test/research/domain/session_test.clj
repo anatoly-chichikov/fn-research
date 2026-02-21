@@ -219,3 +219,104 @@
         item (session/session data)]
     (is (= run (pending/id (.get (session/pending item))))
         "Deserialized pending run did not match")))
+
+(deftest the-session-returns-provided-query
+  (let [rng (gen/ids 12023)
+        day (inc (.nextInt rng 8))
+        hour (inc (.nextInt rng 8))
+        time (str "2026-01-0" day "T0" hour ":00:00")
+        topic (gen/cyrillic rng 6)
+        query (gen/greek rng 7)
+        item (session/session {:id (gen/uuid rng)
+                               :topic topic
+                               :tasks []
+                               :created time
+                               :query query})]
+    (is (= query (session/query item))
+        "Session query did not match provided value")))
+
+(deftest the-session-returns-provided-processor
+  (let [rng (gen/ids 12025)
+        day (inc (.nextInt rng 8))
+        hour (inc (.nextInt rng 8))
+        time (str "2026-01-0" day "T0" hour ":00:00")
+        topic (gen/cyrillic rng 6)
+        processor (gen/armenian rng 5)
+        item (session/session {:id (gen/uuid rng)
+                               :topic topic
+                               :tasks []
+                               :created time
+                               :processor processor})]
+    (is (= processor (session/processor item))
+        "Session processor did not match provided value")))
+
+(deftest the-session-returns-provided-language
+  (let [rng (gen/ids 12027)
+        day (inc (.nextInt rng 8))
+        hour (inc (.nextInt rng 8))
+        time (str "2026-01-0" day "T0" hour ":00:00")
+        topic (gen/cyrillic rng 6)
+        language (gen/hiragana rng 5)
+        item (session/session {:id (gen/uuid rng)
+                               :topic topic
+                               :tasks []
+                               :created time
+                               :language language})]
+    (is (= language (session/language item))
+        "Session language did not match provided value")))
+
+(deftest the-session-returns-provided-provider
+  (let [rng (gen/ids 12029)
+        day (inc (.nextInt rng 8))
+        hour (inc (.nextInt rng 8))
+        time (str "2026-01-0" day "T0" hour ":00:00")
+        topic (gen/cyrillic rng 6)
+        provider (gen/greek rng 5)
+        item (session/session {:id (gen/uuid rng)
+                               :topic topic
+                               :tasks []
+                               :created time
+                               :provider provider})]
+    (is (= provider (session/provider item))
+        "Session provider did not match provided value")))
+
+(deftest the-session-reconfigure-updates-provider
+  (let [rng (gen/ids 12031)
+        day (inc (.nextInt rng 8))
+        hour (inc (.nextInt rng 8))
+        time (str "2026-01-0" day "T0" hour ":00:00")
+        topic (gen/cyrillic rng 6)
+        provider (gen/greek rng 5)
+        processor (gen/armenian rng 5)
+        item (session/session {:id (gen/uuid rng)
+                               :topic topic
+                               :tasks []
+                               :created time
+                               :provider (gen/cyrillic rng 4)
+                               :processor (gen/cyrillic rng 4)})
+        updated (session/reconfigure item {:provider provider
+                                           :processor processor})]
+    (is (= provider (session/provider updated))
+        "Reconfigured provider did not match")))
+
+(deftest the-session-serializes-research-params
+  (let [rng (gen/ids 12033)
+        day (inc (.nextInt rng 8))
+        hour (inc (.nextInt rng 8))
+        time (str "2026-01-0" day "T0" hour ":00:00")
+        topic (gen/cyrillic rng 6)
+        query (gen/greek rng 7)
+        processor (gen/armenian rng 5)
+        language (gen/hiragana rng 5)
+        provider (gen/cyrillic rng 5)
+        item (session/session {:id (gen/uuid rng)
+                               :topic topic
+                               :tasks []
+                               :created time
+                               :query query
+                               :processor processor
+                               :language language
+                               :provider provider})
+        data (session/data item)]
+    (is (= query (:query data))
+        "Serialized query did not match original")))

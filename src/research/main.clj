@@ -3,11 +3,13 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.tools.cli :as cli]
+            [research.domain.session :as session]
             [research.main.execute :as execute]
             [research.main.launch :as launch]
             [research.main.print :as print]
             [research.main.seed :as seed]
-            [research.main.support :as support]))
+            [research.main.support :as support]
+            [research.storage.repository :as repo]))
 
 (declare env)
 
@@ -31,11 +33,22 @@
   (generate [_ id html]
     (print/render data out id html))
   (create [_ topic]
-    (seed/seed data topic))
+    (seed/seed data topic "" "" "" ""))
   (run [_ topic query processor language provider]
     (launch/launch root data out topic query processor language provider env))
   (research [_ id query processor language provider]
-    (execute/execute root data out id query processor language provider env)))
+    (let [store (repo/repo data)
+          list (repo/load store)
+          pick (first (filter #(str/starts-with? (session/id %) id) list))]
+      (when pick
+        (let [updated (session/reconfigure
+                       pick
+                       {:query query
+                        :processor processor
+                        :language language
+                        :provider provider})]
+          (repo/update store updated)
+          (execute/execute root data out id env))))))
 
 (def env
   "Return environment value by key."

@@ -54,6 +54,8 @@ ask language Which language for the result?
   - Spanish
   - Greek
 
+rule Always normalize the language value to its full English form: "English", "Russian", "Spanish", "Greek". Regardless of user input (ru, рус, en, eng, ελληνικά, etc.) — always store and pass the canonical English name.
+
 After language selected — switch all follow-up questions to that language.
 
 ask provider (skip if provided inline) Which data provider?
@@ -92,15 +94,36 @@ If user asks for two runs at once:
 - start two docker containers (different names) and report both
 
 brief format:
-- short title (max 120 chars, no colons/subtitles) + "Research:" + flat numbered list
-- title = noun phrase, not a question or full sentence
-- bad: "Is AI image generation real creativity or just entertainment?"
-- good: "AI art as creativity"
+- title (max 120 chars) + "Research:" + flat numbered list
 - dense single-line items, all details via dash/colon in one line
 - no bold, no subheadings, no nested lists, no extra sections
 - language = result language
 
+title rules:
+- the title is the most important part — it appears in the PDF, folder name, and session list
+- capture the angle or thesis, not just the subject area — what exactly is being investigated and why it matters
+- write as if naming an essay or magazine longread, not a textbook chapter or Wikipedia article
+- noun phrase, not a question or full sentence
+- no colons, no subtitles, no " — " separators
+- banned words: deep dive, overview, best practices, comprehensive, framework, guide, exploration
+- no "X vs Y" comparisons in titles — reframe as the underlying question
+- bad titles (too generic, textbook-like, machine-sounding):
+  - "How Rust Works" → sounds like a tutorial for beginners
+  - "Enterprise data platform architecture" → textbook chapter heading
+  - "Marriage in modern European society" → sociology coursework title
+  - "Goal Framework Anti-Patterns Deep Dive" → buzzword pile-up
+  - "AI-Augmented Engineering Career Frameworks — 2026 Best Practices" → subtitle + buzzwords
+  - "Data needs and quality requirements of agentic search platforms" → academic paper abstract
+- good titles (specific angle, human voice, convey what's interesting):
+  - "Ownership as a contract with the compiler" → specific mechanism + metaphor
+  - "The data platform that is not just a set of tools" → captures the real tension
+  - "European marriage without obligation" → the actual phenomenon being researched
+  - "The career ladder that ignores AI agents" → specific gap, not generic topic
+  - "The data appetite of agentic search platforms" → active voice, specific angle
+- ask yourself: would a thoughtful person use this phrase to describe their research to a colleague over coffee?
+
 run docker build -t research .
+rule {topic} must be the crafted title from the brief, never the raw user input
 rule The query argument MUST contain real newlines, not literal \n escapes — use $'...' (ANSI-C quoting) for the query argument so that \n is interpreted as actual newline characters by bash
 run docker run -d --name "research-{timestamp}-{slug}" \
     -v "$(pwd)/output:/app/output" \

@@ -180,7 +180,7 @@
                (if (str/blank? (str/trim line)) text (str/trim line)))
              ""
              head)
-        topic (or (:topic entry) top "")
+        topic (or (:topic entry) (:topic item) top "")
         items (if (seq (:items entry)) (:items entry) list)
         items (mapv node items)
         brief {:topic topic

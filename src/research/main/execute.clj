@@ -20,7 +20,7 @@
 
 (defn execute
   "Run research for session."
-  [root data out id query processor language provider env]
+  [root data out id env]
   (let [repo (repo/repo data)
         list (repo/load repo)
         pick (first (filter #(str/starts-with? (session/id %) id) list))]
@@ -113,7 +113,11 @@
                     path (organizer/report org name provider)]
                 (document/save doc path)
                 (println (str "PDF generated: " (.toString path))))))
-          (let [allow #{"parallel" "valyu" "xai"}
+          (let [query (session/query pick)
+                processor (session/processor pick)
+                language (session/language pick)
+                provider (session/provider pick)
+                allow #{"parallel" "valyu" "xai"}
                 _ (when-not (contains? allow provider)
                     (throw (ex-info
                             "Provider must be parallel valyu or xai"
@@ -140,7 +144,8 @@
                                        :query query
                                        :processor processor
                                        :language language
-                                       :provider provider})
+                                       :provider provider
+                                       :topic (session/topic pick)})
                 state (session/start pick pend)
                 _ (repo/update repo state)]
             (println (str "Query: " query))
