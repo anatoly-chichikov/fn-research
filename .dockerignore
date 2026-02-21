@@ -6,5 +6,7 @@
 .venv
 __pycache__
 output
+target
+tmp_cache
 tmp_codex_schema
 .gitignore

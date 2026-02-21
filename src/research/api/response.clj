@@ -36,35 +36,38 @@
   (completed [_] (= status "completed"))
   (failed [_] (= status "failed"))
   (text [_] text)
-  (sources [_] (let [seen (atom #{})
-                     policy (or (:link data) (link/make))]
-                 (reduce
-                  (fn [list field]
-                    (let [items (get field :citations [])]
-                      (reduce
-                       (fn [list cite]
-                         (let [url (or (:url cite) "")
-                               url (if (str/blank? url)
-                                     ""
-                                     (link/clean policy url))
-                               flag (and (not (str/blank? url))
-                                         (not (contains? @seen url)))]
-                           (if flag
-                             (let [ex (get cite :excerpts [])
-                                   note (if (seq ex) (first ex) "")
-                                   head (or (:title cite)
-                                            (link/domain policy url))
-                                   item (result/->CitationSource
-                                         head
-                                         url
-                                         note)]
-                               (swap! seen conj url)
-                               (conj list item))
-                             list)))
-                       list
-                       items)))
-                  []
-                  (or (:basis data) [])))))
+  (sources [_] (let [policy (or (:link data) (link/make))
+                     state (reduce
+                            (fn [state field]
+                              (let [items (get field :citations [])]
+                                (reduce
+                                 (fn [state cite]
+                                   (let [url (or (:url cite) "")
+                                         url (if (str/blank? url)
+                                               ""
+                                               (link/clean policy url))
+                                         flag (and (not (str/blank? url))
+                                                   (not (contains?
+                                                         (:seen state)
+                                                         url)))]
+                                     (if flag
+                                       (let [ex (get cite :excerpts [])
+                                             note (if (seq ex) (first ex) "")
+                                             head (or (:title cite)
+                                                      (link/domain policy url))
+                                             item (result/->CitationSource
+                                                   head
+                                                   url
+                                                   note)]
+                                         {:seen (conj (:seen state) url)
+                                          :list (conj (:list state) item)})
+                                       state)))
+                                 state
+                                 items)))
+                            {:seen #{}
+                             :list []}
+                            (or (:basis data) []))]
+                 (:list state))))
 
 (defn response
   "Create response from map."

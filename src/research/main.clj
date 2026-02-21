@@ -33,9 +33,9 @@
   (create [_ topic]
     (seed/seed data topic))
   (run [_ topic query processor language provider]
-    (launch/launch root data out topic query processor language provider env))
+    (launch/launch root data topic query processor language provider))
   (research [_ id query processor language provider]
-    (execute/execute root data out id query processor language provider env)))
+    (execute/execute root data id query processor language provider)))
 
 (def env
   "Return environment value by key."

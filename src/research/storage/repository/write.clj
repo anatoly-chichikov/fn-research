@@ -2,7 +2,7 @@
   (:require [clojure.pprint :as pprint]
             [research.domain.session :as session]
             [research.storage.organizer :as organizer])
-  (:import (java.nio.file Files)
+  (:import (java.nio.file Files StandardCopyOption)
            (java.nio.file.attribute FileAttribute)))
 
 (defn store
@@ -18,5 +18,14 @@
             base (.resolve root name)
             _ (Files/createDirectories base (make-array FileAttribute 0))
             path (.resolve base "session.edn")
-            text (with-out-str (pprint/pprint (session/data item)))]
-        (spit (.toFile path) text :encoding "UTF-8")))))
+            text (with-out-str (pprint/pprint (session/data item)))
+            temp (Files/createTempFile base "session" ".tmp"
+                                       (make-array FileAttribute 0))]
+        (try
+          (spit (.toFile temp) text :encoding "UTF-8")
+          (Files/move temp path
+                      (into-array java.nio.file.CopyOption
+                                  [StandardCopyOption/ATOMIC_MOVE]))
+          (catch Exception exc
+            (Files/deleteIfExists temp)
+            (throw exc)))))))

@@ -29,7 +29,7 @@
               reply (:value result)
               code (:status reply)
               body (:body reply)
-              info (when (and code (< code 300))
+              info (when (and code (< code 300) (some? body))
                      (json/read-value
                       body
                       (json/object-mapper {:decode-key-fn keyword})))

@@ -108,6 +108,19 @@
         result (and (= text (first target)) (= rule (second target)))]
     (is result "Text restrictions were missing")))
 
+(deftest ^{:doc "Ensure compress disposes writer on exception"}
+  the-compress-disposes-writer-on-exception
+  (let [path (java.nio.file.Files/createTempFile
+              "cover"
+              ".jpg"
+              (make-array
+               java.nio.file.attribute.FileAttribute
+               0))
+        data (byte-array (map byte [0 1 2 3 4 5]))]
+    (is (thrown? Exception
+                 (gen/compress data path 0.85))
+        "Compress did not throw on invalid image data")))
+
 (deftest the-generator-rejects-missing-status
   (let [rng (seed/ids 9031)
         key (seed/latin rng 12)

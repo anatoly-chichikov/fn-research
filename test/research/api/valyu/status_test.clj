@@ -63,3 +63,25 @@
         (let [data (status/status item id)]
           (is (= state (:status data))
               "status did not recover from missing status"))))))
+
+(deftest ^{:doc "Ensure status throws on nil body instead of NPE"}
+  the-status-throws-on-nil-body
+  (let [rng (gen/ids 18405)
+        id (gen/armenian rng 6)
+        key (gen/greek rng 5)
+        base (gen/latin rng 6)
+        success (+ 200 (.nextInt rng 50))
+        net (reify request/Requested
+              (get [_ _ _]
+                (delay {:status success
+                        :body nil}))
+              (post [_ _ _]
+                (delay {})))
+        item (status/make base key {:net net
+                                    :log (progress/make)})]
+    (with-redefs-fn {#'status/pause (fn [_ _] nil)
+                     #'clojure.core/println (fn [& _] nil)}
+      (fn []
+        (is (thrown? clojure.lang.ExceptionInfo
+                     (status/status item id))
+            "status did not throw on nil body")))))
