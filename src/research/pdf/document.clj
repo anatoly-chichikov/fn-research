@@ -1,17 +1,13 @@
 (ns research.pdf.document
   (:require [clojure.string :as str]
-            [markdown.core :as md]
-            [research.domain.pending :as pending]
             [research.domain.session :as sess]
-            [research.domain.task :as task]
             [research.pdf.document.citations :as doccite]
             [research.pdf.document.data :as docdata]
             [research.pdf.document.env :as docenv]
             [research.pdf.document.sources :as docsources]
             [research.pdf.document.tasks :as doctasks]
             [research.pdf.document.text :as doctext]
-            [research.pdf.style :as style])
-  (:import (java.nio.file Files LinkOption)))
+            [research.pdf.style :as style]))
 (declare author service coverimage brief emit)
 (defprotocol Signed
   "Object with author signature."
@@ -103,61 +99,9 @@
   "Return report author from env."
   []
   (or (env "REPORT_FOR") ""))
-(defn service
-  "Return service name from latest task."
-  [item]
-  (let [list (sess/tasks item)
-        last (last list)]
-    (if last (task/provider last) "parallel.ai")))
-(defn coverimage
-  "Render cover image html."
-  [item]
-  (let [cover (:cover item)]
-    (if (and (.isPresent cover)
-             (Files/exists (.get cover) (make-array LinkOption 0)))
-      (str "<div class=\"cover-image\"><img src=\""
-           (.toString (.toUri (.get cover)))
-           "\" alt=\"Cover\" /></div>")
-      "")))
-(defn brief
-  "Render brief section."
-  [item]
-  (let [sess (:session item)
-        list (sess/tasks sess)
-        head (first list)
-        hold (sess/pending sess)
-        slot (if (and (not head) (.isPresent hold)) (.get hold) nil)
-        info (cond
-               head (task/brief head)
-               slot (pending/brief slot)
-               :else {})
-        items (or (:items info) [])
-        topic (str (or (:topic info) ""))
-        text (cond
-               (seq items) ""
-               (str/blank? topic) ""
-               :else topic)
-        text (if (seq items) "" (doctext/listify text))
-        text (if (seq items) "" (doctext/normalize text))
-        text (if (seq items) "" (doctext/rule text))
-        text (if (seq items) "" (doccite/stars text))
-        html (if (seq items)
-               (str
-                (if (str/blank? topic)
-                  ""
-                  (str "<p>" (doctext/escape topic) "</p>"))
-                (doctext/outline items))
-               (md/md-to-html-string text))
-        html (if (seq items) html (doccite/tables html))
-        html (if (seq items) html (doccite/codeindent html))
-        html (if (seq items) html (doccite/backslash html))]
-    (if (str/blank? html)
-      ""
-      (str "<div class=\"brief\"><div class=\"container\">"
-           "<h1>Exploration Brief</h1>"
-           "<div class=\"query\">"
-           html
-           "</div></div></div>"))))
+(def service "Service name." docenv/service)
+(def coverimage "Cover image html." docenv/coverimage)
+(def brief "Brief section." docenv/brief)
 (def heading "Heading text." doctext/heading)
 (def normalize "List blank lines." doctext/normalize)
 (def listify "Inline list conversion." doctext/listify)

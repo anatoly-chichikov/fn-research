@@ -166,6 +166,35 @@
         size (count (session/tasks item))]
     (is (= 2 size) "Migration did not build tasks from responses")))
 
+(deftest ^{:doc "Concurrent appends preserve all sessions"}
+  the-repository-survives-concurrent-appends
+  (let [rng (gen/ids 24019)
+        root (Files/createTempDirectory "repo"
+                                        (make-array FileAttribute 0))
+        item (repo/repo root)
+        size 8
+        time "2026-01-05T06:00:00"
+        list (mapv (fn [_]
+                     (session/session {:id (gen/uuid rng)
+                                       :topic (gen/cyrillic rng 6)
+                                       :tasks []
+                                       :created time}))
+                   (range size))
+        pool (java.util.concurrent.Executors/newFixedThreadPool 4)
+        latch (java.util.concurrent.CountDownLatch. size)
+        _ (doseq [entry list]
+            (.submit pool
+                     ^Runnable
+                     (fn []
+                       (try
+                         (repo/append item entry)
+                         (finally
+                           (.countDown latch))))))]
+    (.await latch 30 java.util.concurrent.TimeUnit/SECONDS)
+    (.shutdown pool)
+    (is (= size (count (repo/load item)))
+        "Concurrent appends lost sessions")))
+
 (deftest ^{:doc "Strips query from session edn"}
   the-repository-strips-query-from-session-edn
   (let [rng (gen/ids 24017)

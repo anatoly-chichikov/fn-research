@@ -4,7 +4,7 @@
 
 (defn launch
   "Create session and run research."
-  [root data out topic query processor language provider env]
+  [root data topic query processor language provider]
   (let [processor (if (and (= provider "xai") (= processor "year"))
                     "social"
                     processor)
@@ -42,4 +42,4 @@
     (doseq [pair pairs]
       (let [name (first pair)
             proc (second pair)]
-        (execute/execute root data out id query proc language name env)))))
+        (execute/execute root data id query proc language name)))))

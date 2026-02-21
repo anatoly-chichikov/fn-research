@@ -18,32 +18,36 @@
 (defn emit
   "Render PDF using WeasyPrint."
   [html path]
-  (let [tmp (Files/createTempFile "report" ".html" (make-array FileAttribute 0))
-        _ (spit (.toFile tmp) html :encoding "UTF-8")
-        vars (into {} (System/getenv))
-        home (or (get vars "DYLD_FALLBACK_LIBRARY_PATH") "")
-        list [home "/opt/homebrew/lib" "/usr/local/lib"]
-        list (filter #(not (str/blank? %)) list)
-        link (str/join ":" list)
-        vars (assoc vars "DYLD_FALLBACK_LIBRARY_PATH" link)
-        res (shell/sh
-             "uv"
-             "run"
-             "--with"
-             "weasyprint"
-             "python"
-             "-m"
-             "weasyprint"
-             (.toString tmp)
-             (.toString path)
-             :env vars)
-        code (:exit res)
-        _ (Files/deleteIfExists tmp)]
-    (if (zero? code)
-      path
-      (throw (ex-info "Weasyprint failed" {:code code
-                                           :out (:out res)
-                                           :err (:err res)})))))
+  (let [tmp (Files/createTempFile
+             "report" ".html"
+             (make-array FileAttribute 0))]
+    (try
+      (let [_ (spit (.toFile tmp) html :encoding "UTF-8")
+            vars (into {} (System/getenv))
+            home (or (get vars "DYLD_FALLBACK_LIBRARY_PATH") "")
+            list [home "/opt/homebrew/lib" "/usr/local/lib"]
+            list (filter #(not (str/blank? %)) list)
+            link (str/join ":" list)
+            vars (assoc vars "DYLD_FALLBACK_LIBRARY_PATH" link)
+            res (shell/sh
+                 "uv"
+                 "run"
+                 "--with"
+                 "weasyprint"
+                 "python"
+                 "-m"
+                 "weasyprint"
+                 (.toString tmp)
+                 (.toString path)
+                 :env vars)
+            code (:exit res)]
+        (if (zero? code)
+          path
+          (throw (ex-info "Weasyprint failed" {:code code
+                                               :out (:out res)
+                                               :err (:err res)}))))
+      (finally
+        (Files/deleteIfExists tmp)))))
 
 (defn author
   "Return report author from env."

@@ -62,21 +62,28 @@
   "Return median intensity."
   [gray]
   (let [hist (Mat.)
-        list (ArrayList.)
-        _ (.add list gray)
         channels (MatOfInt. (int-array [0]))
         mask (Mat.)
         bins (MatOfInt. (int-array [256]))
-        range (MatOfFloat. (float-array [0.0 256.0]))
-        _ (Imgproc/calcHist list channels mask hist bins range)
-        total (* (.rows gray) (.cols gray))
-        half (/ total 2.0)]
-    (loop [idx 0 sum 0.0]
-      (if (< idx 256)
-        (let [cell (aget (.get hist idx 0) 0)
-              sum (+ sum cell)]
-          (if (>= sum half) idx (recur (inc idx) sum)))
-        0.0))))
+        range (MatOfFloat. (float-array [0.0 256.0]))]
+    (try
+      (let [list (ArrayList.)
+            _ (.add list gray)
+            _ (Imgproc/calcHist list channels mask hist bins range)
+            total (* (.rows gray) (.cols gray))
+            half (/ total 2.0)]
+        (loop [idx 0 sum 0.0]
+          (if (< idx 256)
+            (let [cell (aget (.get hist idx 0) 0)
+                  sum (+ sum cell)]
+              (if (>= sum half) idx (recur (inc idx) sum)))
+            0.0)))
+      (finally
+        (.release hist)
+        (.release channels)
+        (.release mask)
+        (.release bins)
+        (.release range)))))
 
 (defn- canny
   "Return edge mat."
@@ -148,13 +155,17 @@
   (let [part (.submat lab rect)
         mean (MatOfDouble.)
         std (MatOfDouble.)]
-    (Core/meanStdDev part mean std)
-    (.release part)
-    (let [mean (vec (.toArray mean))
-          std (vec (.toArray std))
-          spread (/ (+ (nth std 0) (nth std 1) (nth std 2)) 3.0)]
-      {:mean mean
-       :std spread})))
+    (try
+      (let [_ (Core/meanStdDev part mean std)
+            mv (vec (.toArray mean))
+            sv (vec (.toArray std))
+            spread (/ (+ (nth sv 0) (nth sv 1) (nth sv 2)) 3.0)]
+        {:mean mv
+         :std spread})
+      (finally
+        (.release part)
+        (.release mean)
+        (.release std)))))
 
 (defn- metrics
   "Return side metrics."
@@ -312,72 +323,83 @@
                (ex-info
                 (str "Image path missing path=" (.toString path))
                 {:path (.toString path)})))
-          mat (fetch path)
+          raw (fetch path)
           span (double (get config :span 1024.0))
-          data (resize mat span)
+          data (resize raw span)
           mat (:mat data)
           rate (:scale data)
           lab (Mat.)
-          gray (Mat.)
-          _ (Imgproc/cvtColor mat lab Imgproc/COLOR_BGR2Lab)
-          _ (Imgproc/cvtColor mat gray Imgproc/COLOR_BGR2GRAY)
-          floor (double (get config :floor 0.0))
-          edge (canny
-                gray
-                (double (get config :sigma 0.33))
-                floor)
-          wide (.cols gray)
-          high (.rows gray)
-          cap (double (get config :cap 0.05))
-          base (int (get config :min 1))
-          ring (int (get config :band 1))
-          sides (int (get config :sides 4))
-          bound (double (get config :tone 15.0))
-          limit (limit wide high cap base)
-          best (loop [w base
-                      best {:ok false
-                            :score 0.0
-                            :width 0
-                            :sides []
-                            :tone bound}]
-                 (if (<= w limit)
-                   (let [list (mapv
-                               (fn [side]
-                                 (metrics lab edge side w ring))
-                               [:top :bottom :left :right])
-                         list (vec (remove nil? list))
-                         good (vec (filter
-                                    (fn [item]
-                                      (match item config))
-                                    list))
-                         ok (>= (count good) sides)
-                         keep (and ok (tone good bound))
-                         score (if keep (apply min (mapv :score good)) 0.0)
-                         best (if (> score (:score best))
-                                {:ok keep
-                                 :score score
-                                 :width w
-                                 :sides (mapv :side good)
-                                 :tone bound}
-                                best)]
-                     (recur (inc w) best))
-                   best))
-          ridge (double (get config :ridge 0.35))
-          peak (double (get config :peak 3.0))
-          line (line edge limit ridge peak sides)
-          mode (cond (and (:ok best) (:ok line)) "both"
-                     (:ok best) "metrics"
-                     (:ok line) "line"
-                     :else "none")
-          frame (not= mode "none")
-          info {:mode mode
-                :scale rate
-                :width (:width best)
-                :sides (:sides best)
-                :line (:sides line)
-                :tone (:tone best)}]
-      {:frame frame
-       :info info}))
+          gray (Mat.)]
+      (try
+        (let [_ (Imgproc/cvtColor mat lab Imgproc/COLOR_BGR2Lab)
+              _ (Imgproc/cvtColor mat gray Imgproc/COLOR_BGR2GRAY)
+              floor (double (get config :floor 0.0))
+              edge (canny
+                    gray
+                    (double (get config :sigma 0.33))
+                    floor)]
+          (try
+            (let [wide (.cols gray)
+                  high (.rows gray)
+                  cap (double (get config :cap 0.05))
+                  base (int (get config :min 1))
+                  ring (int (get config :band 1))
+                  sides (int (get config :sides 4))
+                  bound (double (get config :tone 15.0))
+                  limit (limit wide high cap base)
+                  best (loop [w base
+                              best {:ok false
+                                    :score 0.0
+                                    :width 0
+                                    :sides []
+                                    :tone bound}]
+                         (if (<= w limit)
+                           (let [list (mapv
+                                       (fn [side]
+                                         (metrics lab edge side w ring))
+                                       [:top :bottom :left :right])
+                                 list (vec (remove nil? list))
+                                 good (vec (filter
+                                            (fn [node]
+                                              (match node config))
+                                            list))
+                                 ok (>= (count good) sides)
+                                 keep (and ok (tone good bound))
+                                 score (if keep
+                                         (apply min (mapv :score good))
+                                         0.0)
+                                 best (if (> score (:score best))
+                                        {:ok keep
+                                         :score score
+                                         :width w
+                                         :sides (mapv :side good)
+                                         :tone bound}
+                                        best)]
+                             (recur (inc w) best))
+                           best))
+                  ridge (double (get config :ridge 0.35))
+                  peak (double (get config :peak 3.0))
+                  line (line edge limit ridge peak sides)
+                  mode (cond (and (:ok best) (:ok line)) "both"
+                             (:ok best) "metrics"
+                             (:ok line) "line"
+                             :else "none")
+                  frame (not= mode "none")
+                  info {:mode mode
+                        :scale rate
+                        :width (:width best)
+                        :sides (:sides best)
+                        :line (:sides line)
+                        :tone (:tone best)}]
+              {:frame frame
+               :info info})
+            (finally
+              (.release edge))))
+        (finally
+          (.release raw)
+          (when-not (identical? raw mat) (.release mat))
+          (.release lab)
+          (.release gray)))))
   (scan [item root]
     (let [root (if (instance? Path root)
                  root

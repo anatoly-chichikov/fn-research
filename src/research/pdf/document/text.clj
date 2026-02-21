@@ -1,5 +1,6 @@
 (ns research.pdf.document.text
   (:require [clojure.string :as str]
+            [research.api.link :as link]
             [research.api.response :as response]
             [research.domain.result :as result])
   (:import (org.jsoup Jsoup)
@@ -319,32 +320,7 @@
 (defn trim
   "Remove utm parameters from URL."
   [text]
-  (try
-    (let [part (java.net.URI. text)
-          query (.getQuery part)
-          value (if (and query (not (str/blank? query)))
-                  (let [pairs (map #(str/split % #"=") (str/split query #"&"))
-                        items (filter
-                               (fn [item]
-                                 (not
-                                  (str/starts-with?
-                                   (str/lower-case (first item))
-                                   "utm_")))
-                               pairs)
-                        line (str/join "&" (map #(str/join "=" %) items))]
-                    (if (= line query)
-                      text
-                      (str (.getScheme part)
-                           "://"
-                           (.getAuthority part)
-                           (.getPath part)
-                           (if (str/blank? line) "" (str "?" line))
-                           (if (.getFragment part)
-                             (str "#" (.getFragment part))
-                             ""))))
-                  text)]
-      value)
-    (catch Exception _ text)))
+  (link/clean (link/make) text))
 
 (defn presentation
   "Return decoded URL for display."
