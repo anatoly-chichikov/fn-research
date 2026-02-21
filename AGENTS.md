@@ -6,7 +6,7 @@ Agent instructions for research automation.
 
 | Command | Action |
 |---------|--------|
-| `rs <topic>` | New research |
+| `rs [provider] [processor] <topic>` | New research |
 | `frk` | Fork existing research |
 | `st` | List sessions with PDF paths |
 | `pdf <topic>` | Generate PDF |
@@ -26,6 +26,28 @@ Screenshots can accompany any command or message. Treat them as additional input
 
 New research. Dialog first, then launch.
 
+### Inline parameters
+
+rs supports optional inline provider and processor:
+- `rs valyu standard <topic>` — skip provider/processor questions
+- `rs parallel ultra <topic>` — skip provider/processor questions
+- `rs xai social <topic>` — skip provider/processor questions
+- `rs <topic>` — ask provider/processor as before
+
+parse rules:
+  - first token after `rs`: check if it matches a known provider (parallel, valyu, xai, all)
+  - if provider matched, next token: check if it matches a valid processor for that provider
+  - everything after recognized tokens = topic
+  - if first token is NOT a provider — entire string is the topic, ask provider/processor interactively
+  - provider without processor: use provider, ask processor only
+  - valid combinations:
+    - parallel: pro, pro-fast, ultra, ultra-fast, ultra2x, ultra2x-fast, ultra4x, ultra4x-fast, ultra8x, ultra8x-fast
+    - valyu: fast, standard, heavy
+    - xai: social, full
+    - all: inherits parallel processors (runs parallel then valyu)
+
+### Interactive questions
+
 ask language Which language for the result?
   - English
   - Russian
@@ -34,13 +56,13 @@ ask language Which language for the result?
 
 After language selected — switch all follow-up questions to that language.
 
-ask provider Which data provider?
+ask provider (skip if provided inline) Which data provider?
   - parallel (cheaper and faster)
   - valyu (more thorough, premium result)
   - xai (social sources)
   - all (run parallel then valyu)
 
-ask processor What compute level? (
+ask processor (skip if provided inline) What compute level?
   - parallel:
     - pro
     - ultra
