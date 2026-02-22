@@ -733,8 +733,27 @@ pre {
   margin-bottom: 0;
 }
 
-.brief .query ol, .brief .query ul {
+.brief .query ol {
+  list-style-type: none;
+  counter-reset: brief-item;
+  padding-left: 0;
+  margin: 0.75rem 0;
+}
+
+.brief .query ol ol {
+  padding-left: 1.5rem;
+}
+
+.brief .query ul {
   margin: 0.75rem 0 0.75rem 2rem;
+}
+
+.brief .query ol > li {
+  counter-increment: brief-item;
+}
+
+.brief .query ol > li::before {
+  content: counters(brief-item, ".") ". ";
 }
 
 .brief .query li {
