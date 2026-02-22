@@ -141,7 +141,7 @@
         hour (inc (.nextInt rng 8))
         time (str "2026-01-0" day "T0" hour ":00:00")
         query (str (gen/hiragana rng 6)
-                   "\n\nResearch:\n1. "
+                   "\n\nResearch:\n"
                    (gen/greek rng 4))
         status (gen/cyrillic rng 6)
         processor (gen/greek rng 6)
@@ -217,7 +217,7 @@
         time (str "2026-01-0" day "T0" hour ":00:00")
         mark (gen/hiragana rng 6)
         query (str (gen/greek rng 6)
-                   "\n\nResearch:\n1. "
+                   "\n\nResearch:\n"
                    (gen/armenian rng 4))
         item (task/task {:id (gen/uuid rng)
                          :query query
@@ -262,15 +262,12 @@
         head (gen/greek rng 5)
         inner (gen/armenian rng 5)
         tail (gen/hiragana rng 5)
-        pad (apply str (repeat 4 " "))
         query (str topic
-                   "\n\nResearch:\n1. "
+                   "\n\nResearch:\n"
                    head
-                   "\n"
-                   pad
-                   "1. "
+                   "\n\t"
                    inner
-                   "\n2. "
+                   "\n"
                    tail)
         item (task/task {:id (gen/uuid rng)
                          :query query
@@ -286,3 +283,125 @@
                 (= inner (:text (first (:items node))))
                 (= tail (:text peer)))]
     (is ok "Nested query items were not parsed")))
+
+(deftest the-task-parses-compound-numbered-items-at-depth-two
+  (let [rng (gen/ids 11023)
+        root (gen/greek rng 5)
+        child (gen/armenian rng 5)
+        sibling (gen/hiragana rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n1. "
+                   root
+                   "\n  1.1. "
+                   child
+                   "\n2. "
+                   sibling)
+        item (task/task {:id (gen/uuid rng)
+                         :query query
+                         :status (gen/greek rng 6)
+                         :language (gen/cyrillic rng 5)
+                         :service (gen/cyrillic rng 4)
+                         :created "2026-01-01T00:00:00"})
+        brief (task/brief item)
+        items (:items brief)
+        node (first items)]
+    (is (= child (:text (first (:items node))))
+        "Compound numbered sub-item was not nested under parent")))
+
+(deftest the-task-parses-indented-compound-items-at-depth-two
+  (let [rng (gen/ids 11025)
+        root (gen/hebrew rng 5)
+        child (gen/armenian rng 5)
+        tail (gen/greek rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n1. "
+                   root
+                   "\n    1.1. "
+                   child
+                   "\n2. "
+                   tail)
+        item (task/task {:id (gen/uuid rng)
+                         :query query
+                         :status (gen/greek rng 6)
+                         :language (gen/cyrillic rng 5)
+                         :service (gen/cyrillic rng 4)
+                         :created "2026-01-01T00:00:00"})
+        brief (task/brief item)
+        items (:items brief)
+        node (first items)]
+    (is (= child (:text (first (:items node))))
+        "Indented compound item was not nested at depth two")))
+
+(deftest the-task-parses-triple-compound-items-at-depth-three
+  (let [rng (gen/ids 11027)
+        root (gen/greek rng 5)
+        mid (gen/armenian rng 5)
+        leaf (gen/hebrew rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n1. "
+                   root
+                   "\n  1.1. "
+                   mid
+                   "\n    1.1.1. "
+                   leaf)
+        item (task/task {:id (gen/uuid rng)
+                         :query query
+                         :status (gen/greek rng 6)
+                         :language (gen/cyrillic rng 5)
+                         :service (gen/cyrillic rng 4)
+                         :created "2026-01-01T00:00:00"})
+        brief (task/brief item)
+        items (:items brief)
+        node (first items)
+        sub (first (:items node))]
+    (is (= leaf (:text (first (:items sub))))
+        "Triple compound item was not nested at depth three")))
+
+(deftest the-task-parses-tab-indented-items
+  (let [rng (gen/ids 11029)
+        root (gen/greek rng 5)
+        child (gen/armenian rng 5)
+        sibling (gen/hiragana rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n"
+                   root
+                   "\n\t"
+                   child
+                   "\n"
+                   sibling)
+        item (task/task {:id (gen/uuid rng)
+                         :query query
+                         :status (gen/greek rng 6)
+                         :language (gen/cyrillic rng 5)
+                         :service (gen/cyrillic rng 4)
+                         :created "2026-01-01T00:00:00"})
+        brief (task/brief item)
+        items (:items brief)
+        node (first items)]
+    (is (= child (:text (first (:items node))))
+        "Tab-indented sub-item was not nested under parent")))
+
+(deftest the-task-parses-double-tab-items-at-depth-three
+  (let [rng (gen/ids 11031)
+        root (gen/greek rng 5)
+        mid (gen/armenian rng 5)
+        leaf (gen/hebrew rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n"
+                   root
+                   "\n\t"
+                   mid
+                   "\n\t\t"
+                   leaf)
+        item (task/task {:id (gen/uuid rng)
+                         :query query
+                         :status (gen/greek rng 6)
+                         :language (gen/cyrillic rng 5)
+                         :service (gen/cyrillic rng 4)
+                         :created "2026-01-01T00:00:00"})
+        brief (task/brief item)
+        items (:items brief)
+        node (first items)
+        sub (first (:items node))]
+    (is (= leaf (:text (first (:items sub))))
+        "Double-tab item was not nested at depth three")))

@@ -26,25 +26,43 @@
     {:text text
      :items list}))
 
+(defn- marker
+  "Check if line is a numbered or bullet item."
+  [line]
+  (let [trim (str/trim (str line))]
+    (or (re-find #"^(\d+(?:\.\d+)*)[.)]?\s+.+" trim)
+        (re-find #"^[*+-]\s+.+" trim))))
+
 (defn- point
   "Parse list line into depth item."
   [line]
-  (let [line (str/replace (str line) #"\t" " ")
+  (let [raw (str line)
+        tabs (count (take-while #(= \tab %) raw))
+        line (str/replace raw #"\t" " ")
         trim (str/triml line)
         pad (- (count line) (count trim))
         num (re-find #"^(\d+(?:\.\d+)*)[.)]?\s+(.+)$" trim)
         bul (re-find #"^[*+-]\s+(.+)$" trim)
+        plain (and (nil? num)
+                   (nil? bul)
+                   (not (str/blank? trim))
+                   (or (pos? tabs) (zero? pad)))
         text (cond
                num (nth num 2)
                bul (second bul)
+               plain trim
                :else nil)
         base (cond
                num (count (str/split (nth num 1) #"\."))
                bul (inc (quot pad 2))
+               plain (inc tabs)
                :else nil)
         depth (cond
-                num (if (pos? pad) (inc (quot pad 4)) base)
-                bul base
+                num (if (> base 1)
+                      base
+                      (if (pos? pad) (inc (quot pad 4)) base))
+                bul (inc (quot pad 2))
+                plain base
                 :else nil)
         depth (if depth (max 1 (min depth 3)) nil)
         text (str/trim (or text ""))]
@@ -97,18 +115,16 @@
       items)))
 
 (defn- lines
-  "Render nested items into markdown list."
+  "Render nested items into tab-indented list."
   [items depth]
-  (let [pad (apply str (repeat (* 4 depth) " "))]
+  (let [pad (apply str (repeat depth "\t"))]
     (loop [idx 0 list []]
       (if (< idx (count items))
         (let [item (nth items idx)
               text (str/trim (str (or (:text item) "")))
               nest (or (:items item) [])
               rows (lines nest (inc depth))
-              line (if (str/blank? text)
-                     nil
-                     (str pad (inc idx) ". " text))
+              line (if (str/blank? text) nil (str pad text))
               list (cond
                      (and (nil? line) (seq rows)) (into list rows)
                      (nil? line) list
@@ -167,7 +183,7 @@
                      rows))
         edge (first (keep-indexed
                      (fn [idx line]
-                       (when (point line) idx))
+                       (when (marker line) idx))
                      rows))
         cut (if (some? spot) spot edge)
         head (vec (if (some? cut) (take cut rows) rows))

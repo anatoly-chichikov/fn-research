@@ -77,27 +77,173 @@ ask processor (skip if provided inline) What compute level?
     - social (X search + social web only)
     - full (X search + unrestricted web)
 
-ask topic — minimum 3 questions, up to 5 (in selected language):
-  - Scope: narrow vs broad? specific case or general overview?
-  - Audience: who reads this? expert level or beginner-friendly?
-  - Focus: which aspects matter most? what angle interests you?
-  - Constraints: exclude anything? time period? geography? industry?
-  - Output: actionable insights? comparison? trends? recommendations?
+### Structured brief generation
 
-rule Always ask at least 3 topic questions before launching
-rule User can say "enough" to skip remaining questions
-do Surface blind spots and non-obvious angles through questions
+The brief is built in two phases: root topics first, then sub-topics. The goal is always to focus the research — even a broad subject starts with a specific angle.
+
+#### Topic properties
+
+Every topic (root and sub) carries three properties on a 1–5 scale. These are shown to the user for transparency but NOT included in the final brief text. They act as sliders — the user can move them, and the topic text must be reformulated to match.
+
+| Property | Scale | 1 | 3 | 5 |
+|----------|-------|---|---|---|
+| depth | 1–5 | surface overview, trends, landscape | mechanisms, how things work, key details | primary sources, internals, technical depth |
+| novelty | 1–5 | well-established consensus, textbook knowledge | active development, recent shifts | bleeding edge, few sources, mostly hypotheses |
+| applied | 1–5 | pure understanding, "why is it so" | mix of theory and application | concrete decisions, recommendations, "what to do" |
+
+rule Properties are displayed to the user for each topic so they can adjust direction
+rule Properties do NOT go into the brief — they are a reasoning aid for the dialog only
+rule When user changes a property value, the topic text MUST be reformulated to reflect the new level — changing a number without rewriting the topic is meaningless
+rule The model should consider the full 1–5 range when generating topics — use it to calibrate how the topic is phrased
+rule Property labels must be translated to the selected language (e.g. Russian: глубина, новизна, прикладность; Spanish: profundidad, novedad, aplicabilidad; Greek: βάθος, καινοτομία, εφαρμοσιμότητα)
+
+#### Phase 1 — root topics (max 3)
+
+After the user gives their short input:
+
+1. Think deeply about the user's input — what they really want to learn, what directions exist, what's obvious and what's not
+2. Write a summary (2-4 sentences) showing how you understood the user's request: what you think they actually want to learn, what assumptions you're making about their context and level, what you're deliberately leaving out of scope
+3. Generate exactly 3 root topics (in selected language)
+4. Present everything as a compact table (see format below)
+5. Ask for confirmation
+
+rule The summary comes BEFORE the table — it frames the whole research direction
+rule The summary should show genuine reasoning, not generic filler — the user should feel "ah, it actually understood what I need"
+rule The 3 topics together must cover the user's intent without overlap
+rule Each topic should represent a distinct angle or dimension of the subject
+rule Always aim to focus the research — even "I want to learn about X" becomes 3 specific investigative angles
+do Surface non-obvious angles and blind spots the user might not have considered
+do Use properties to make your reasoning transparent
+
+Output format (Phase 1):
+
+```
+**Summary:** [2-4 sentences — this is how I understood your request. What I think you
+actually want to learn and why. What I'm assuming about your context and level. What I'm
+deliberately leaving out of scope. The user reads this FIRST and corrects if the model
+misunderstood — before even looking at the topics below.]
+
+**1. [topic text as it goes into the brief]**
+[1-2 sentences: why this angle, what it covers]
+**depth:** `3` · **novelty:** `2` · **applied:** `4`
+
+**2. [topic text as it goes into the brief]**
+[1-2 sentences: why this angle, what it covers]
+**depth:** `4` · **novelty:** `1` · **applied:** `3`
+
+**3. [topic text as it goes into the brief]**
+[1-2 sentences: why this angle, what it covers]
+**depth:** `2` · **novelty:** `5` · **applied:** `1`
+```
+
+rule Summary must NOT mention, preview, or rephrase any of the 3 topics — it exists on a different level
+rule Summary is about the USER'S INTENT: "I understood that you want X because Y, I'm assuming Z about your context, and I'm leaving out W"
+rule If the user corrects the summary ("нет, я имел в виду другое"), regenerate topics from scratch based on the corrected understanding
+rule Each topic block: bold title → reason on next line → properties on separate line in inline code (`backticks`)
+rule Property labels in output MUST use the selected language — e.g. for Russian: **глубина:** `3` · **новизна:** `2` · **прикладность:** `4` (the examples above use English only as a template)
+rule Keep it compact — no extra blank lines between blocks
+
+Topic text rules:
+- The topic text goes into the brief AS IS — the research engine will read it, not the user
+- It must be a self-contained research question: clear, specific, understandable without context
+- Bad: "Ownership как контракт программиста с компилятором" — too poetic, the engine won't know what to search
+- Good: "Система владения (ownership) в Rust — как компилятор управляет памятью без сборщика мусора, зачем нужен borrow checker и что он даёт на практике"
+- The topic text can be 1-2 full sentences — it's not a title, it's a research instruction
+
+Reason rules:
+- The reason is for the USER, not the engine — it explains WHY this topic was chosen
+- It should be accessible: if the topic mentions technical concepts, the reason should briefly explain them in plain language
+- Bad: "Covers data races, use-after-free, and specific bug classes that ownership prevents" — this just extends the topic with more jargon
+- Good: "Это ключевая фишка Rust — вместо того чтобы программа сама следила за памятью (как в C++, где легко ошибиться), компилятор проверяет всё заранее. Если не понять этот механизм, остальное в Rust не сложится."
+- The reason should answer: "why should I care about this topic?" and "what will I learn?"
+
+The user can:
+- approve all 3 ("да", "ок", "погнали")
+- ask to adjust any topic ("второй попроще", "первый в другую сторону")
+- ask to replace a topic entirely ("убери третий, добавь что-то про X")
+- adjust properties ("сделай глубже", "менее теоретический")
+
+rule Iterate until the user confirms all 3 root topics
+rule After each adjustment, reprint summary + full table with updated values
+
+#### Phase 2 — sub-topics (3 per root)
+
+Once all 3 root topics are confirmed:
+
+1. For each root topic, generate exactly 3 sub-topics
+2. Sub-topics expand the root topic deeper, considering the overall research focus established in Phase 1
+3. Present as one table per root topic (see format below)
+4. Ask for confirmation
+
+rule Sub-topics must not overlap with each other or with other root topics
+rule Sub-topics inherit the general direction of their root but can vary in properties
+do Consider the overall focus when generating sub-topics — they should work as a coherent research plan
+
+Output format (Phase 2) — grouped by root:
+
+```
+**1. [root topic text]**
+
+**1.1. [sub-topic text]**
+[why this matters]
+**depth:** `3` · **novelty:** `2` · **applied:** `4`
+
+**1.2. [sub-topic text]**
+[why this matters]
+**depth:** `4` · **novelty:** `3` · **applied:** `3`
+
+**1.3. [sub-topic text]**
+[why this matters]
+**depth:** `2` · **novelty:** `1` · **applied:** `2`
+
+**2. [root topic text]**
+...
+```
+
+The same topic text rules and reason rules from Phase 1 apply to sub-topics.
+
+The user can adjust sub-topics the same way as root topics. Iterate until confirmed.
+
+#### Brief assembly
+
+Once all topics and sub-topics are confirmed, assemble the brief:
+
+brief format:
+- title (max 120 chars) + "Research:" + tab-indented plain text
+- 3 root topics (no indent), each with 3 sub-topics (one tab indent)
+- no numbering, no bullets — plain text lines, tabs for nesting
+- dense single-line items, details via dash/colon
+- no bold, no subheadings, no extra sections
+- properties and reasoning are NOT included — only topic/sub-topic text
+- language = result language
+
+Example brief structure (tabs shown as →):
+```
+Research:
+[root topic 1 text]
+→[sub-topic text]
+→[sub-topic text]
+→[sub-topic text]
+[root topic 2 text]
+→[sub-topic text]
+→[sub-topic text]
+→[sub-topic text]
+[root topic 3 text]
+→[sub-topic text]
+→[sub-topic text]
+→[sub-topic text]
+```
+
+rule Use real tab characters (\t) for indentation, not spaces
+rule Root topics start at column 0, sub-topics start with one tab
+
+#### Dual runs
 
 If user asks for two runs at once:
 - ask the same questions twice, explicitly for run A then run B (no multi-select)
 - collect params for run A and run B (topic, language, provider, processor when applicable)
+- each run gets its own structured brief generation (Phase 1 + Phase 2)
 - start two docker containers (different names) and report both
-
-brief format:
-- title (max 120 chars) + "Research:" + flat numbered list
-- dense single-line items, all details via dash/colon in one line
-- no bold, no subheadings, no nested lists, no extra sections
-- language = result language
 
 title rules:
 - the title is the most important part — it appears in the PDF, folder name, and session list
@@ -164,7 +310,7 @@ re-brief flow:
   - Load brief from selected session:
     - prefer output/<session>/brief-*.md
     - fallback: output/<session>/input-*.md
-  - Ask user for changes, keep brief format from rs
+  - Ask user for changes using structured brief format (3 root topics × 3 sub-topics from rs)
   - Show diff preview (original brief vs updated brief) before launch, ask confirmation
   - Run new research with updated brief (provider/processor default to original unless user overrides)
   - Save as new session in output/

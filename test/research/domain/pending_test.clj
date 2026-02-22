@@ -8,7 +8,7 @@
   (let [rng (gen/ids 13001)
         run (gen/cyrillic rng 6)
         query (str (gen/hiragana rng 6)
-                   "\n\nResearch:\n1. "
+                   "\n\nResearch:\n"
                    (gen/greek rng 4))
         processor (gen/greek rng 6)
         language (gen/cyrillic rng 6)
@@ -25,7 +25,7 @@
   (let [rng (gen/ids 13003)
         run (gen/cyrillic rng 6)
         query (str (gen/hiragana rng 6)
-                   "\n\nResearch:\n1. "
+                   "\n\nResearch:\n"
                    (gen/greek rng 4))
         processor (gen/greek rng 6)
         language (gen/cyrillic rng 6)
@@ -44,7 +44,7 @@
   (let [rng (gen/ids 13005)
         run (gen/cyrillic rng 6)
         query (str (gen/hiragana rng 6)
-                   "\n\nResearch:\n1. "
+                   "\n\nResearch:\n"
                    (gen/greek rng 4))
         processor (gen/greek rng 6)
         language (gen/cyrillic rng 6)
@@ -61,7 +61,7 @@
   (let [rng (gen/ids 13007)
         run (gen/cyrillic rng 6)
         query (str (gen/hiragana rng 6)
-                   "\n\nResearch:\n1. "
+                   "\n\nResearch:\n"
                    (gen/greek rng 4))
         processor (gen/greek rng 6)
         language (gen/cyrillic rng 6)
@@ -78,7 +78,7 @@
   (let [rng (gen/ids 13009)
         run (gen/cyrillic rng 6)
         query (str (gen/hiragana rng 6)
-                   "\n\nResearch:\n1. "
+                   "\n\nResearch:\n"
                    (gen/greek rng 4))
         processor (gen/greek rng 6)
         language (gen/cyrillic rng 6)
@@ -111,15 +111,12 @@
         head (gen/greek rng 5)
         inner (gen/armenian rng 5)
         tail (gen/hiragana rng 5)
-        pad (apply str (repeat 4 " "))
         query (str (gen/cyrillic rng 6)
-                   "\n\nResearch:\n1. "
+                   "\n\nResearch:\n"
                    head
-                   "\n"
-                   pad
-                   "1. "
+                   "\n\t"
                    inner
-                   "\n2. "
+                   "\n"
                    tail)
         item (pending/pending {:run_id run
                                :query query
@@ -170,7 +167,7 @@
         run (gen/cyrillic rng 6)
         mark (gen/hiragana rng 6)
         query (str (gen/greek rng 6)
-                   "\n\nResearch:\n1. "
+                   "\n\nResearch:\n"
                    (gen/armenian rng 4))
         item (pending/pending {:run_id run
                                :query query
@@ -198,3 +195,125 @@
         data (pending/data item)]
     (is (= name (:provider data))
         "Pending serialize did not include provider")))
+
+(deftest the-pending-parses-compound-numbered-items-at-depth-two
+  (let [rng (gen/ids 13019)
+        run (gen/cyrillic rng 6)
+        root (gen/greek rng 5)
+        child (gen/armenian rng 5)
+        sibling (gen/hiragana rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n1. "
+                   root
+                   "\n  1.1. "
+                   child
+                   "\n2. "
+                   sibling)
+        item (pending/pending {:run_id run
+                               :query query
+                               :processor (gen/greek rng 6)
+                               :language (gen/cyrillic rng 6)
+                               :provider (gen/cyrillic rng 6)})
+        brief (pending/brief item)
+        items (:items brief)
+        node (first items)]
+    (is (= child (:text (first (:items node))))
+        "Compound numbered sub-item was not nested under parent")))
+
+(deftest the-pending-parses-indented-compound-items-at-depth-two
+  (let [rng (gen/ids 13021)
+        run (gen/cyrillic rng 6)
+        root (gen/hebrew rng 5)
+        child (gen/armenian rng 5)
+        tail (gen/greek rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n1. "
+                   root
+                   "\n    1.1. "
+                   child
+                   "\n2. "
+                   tail)
+        item (pending/pending {:run_id run
+                               :query query
+                               :processor (gen/greek rng 6)
+                               :language (gen/cyrillic rng 6)
+                               :provider (gen/cyrillic rng 6)})
+        brief (pending/brief item)
+        items (:items brief)
+        node (first items)]
+    (is (= child (:text (first (:items node))))
+        "Indented compound item was not nested at depth two")))
+
+(deftest the-pending-parses-triple-compound-items-at-depth-three
+  (let [rng (gen/ids 13023)
+        run (gen/cyrillic rng 6)
+        root (gen/greek rng 5)
+        mid (gen/armenian rng 5)
+        leaf (gen/hebrew rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n1. "
+                   root
+                   "\n  1.1. "
+                   mid
+                   "\n    1.1.1. "
+                   leaf)
+        item (pending/pending {:run_id run
+                               :query query
+                               :processor (gen/greek rng 6)
+                               :language (gen/cyrillic rng 6)
+                               :provider (gen/cyrillic rng 6)})
+        brief (pending/brief item)
+        items (:items brief)
+        node (first items)
+        sub (first (:items node))]
+    (is (= leaf (:text (first (:items sub))))
+        "Triple compound item was not nested at depth three")))
+
+(deftest the-pending-parses-tab-indented-items
+  (let [rng (gen/ids 13025)
+        run (gen/cyrillic rng 6)
+        root (gen/greek rng 5)
+        child (gen/armenian rng 5)
+        sibling (gen/hiragana rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n"
+                   root
+                   "\n\t"
+                   child
+                   "\n"
+                   sibling)
+        item (pending/pending {:run_id run
+                               :query query
+                               :processor (gen/greek rng 6)
+                               :language (gen/cyrillic rng 6)
+                               :provider (gen/cyrillic rng 6)})
+        brief (pending/brief item)
+        items (:items brief)
+        node (first items)]
+    (is (= child (:text (first (:items node))))
+        "Tab-indented sub-item was not nested under parent")))
+
+(deftest the-pending-parses-double-tab-items-at-depth-three
+  (let [rng (gen/ids 13027)
+        run (gen/cyrillic rng 6)
+        root (gen/greek rng 5)
+        mid (gen/armenian rng 5)
+        leaf (gen/hebrew rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n"
+                   root
+                   "\n\t"
+                   mid
+                   "\n\t\t"
+                   leaf)
+        item (pending/pending {:run_id run
+                               :query query
+                               :processor (gen/greek rng 6)
+                               :language (gen/cyrillic rng 6)
+                               :provider (gen/cyrillic rng 6)})
+        brief (pending/brief item)
+        items (:items brief)
+        node (first items)
+        sub (first (:items node))]
+    (is (= leaf (:text (first (:items sub))))
+        "Double-tab item was not nested at depth three")))

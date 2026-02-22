@@ -17,22 +17,31 @@
           tail (if (some? spot) (drop (inc spot) lines) [])
           items (loop [list [] chunk tail]
                   (if (seq chunk)
-                    (let [row (str/replace (str (first chunk)) #"\t" " ")
+                    (let [raw (str (first chunk))
+                          tabs (count (take-while #(= \tab %) raw))
+                          row (str/replace raw #"\t" " ")
                           trim (str/triml row)
                           pad (- (count row) (count trim))
                           num (re-find #"^(\d+(?:\.\d+)*)[.)]?\s+(.+)$" trim)
                           bul (re-find #"^[*+-]\s+(.+)$" trim)
+                          plain (and (nil? num)
+                                     (nil? bul)
+                                     (not (str/blank? trim))
+                                     (or (pos? tabs) (zero? pad)))
                           text (cond
                                  num (nth num 2)
                                  bul (second bul)
+                                 plain trim
                                  :else nil)
                           base (cond
                                  num (count (str/split (nth num 1) #"\."))
                                  bul (inc (quot pad 2))
+                                 plain (inc tabs)
                                  :else nil)
                           depth (cond
                                   num (if (pos? pad) (inc (quot pad 4)) base)
                                   bul base
+                                  plain base
                                   :else nil)
                           depth (if depth (max 1 depth) nil)
                           depth (if depth (min depth 3) nil)
