@@ -157,8 +157,20 @@
 (defn normalize
   "Add blank lines before list markers."
   [text]
-  (let [text (str/replace text #"\\n" "\n")]
-    (str/replace text #"([^\n])\n((?:[*+-] |\d+\. ))" "$1\n\n$2")))
+  (let [text (str/replace text #"\\n" "\n")
+        rows (str/split text #"\n" -1)
+        mark #"^\s*(?:[*+-] |\d+\. )"
+        size (count rows)]
+    (loop [idx 0 out []]
+      (if (< idx size)
+        (let [row (nth rows idx)
+              prev (if (pos? idx) (nth rows (dec idx)) "")
+              list (boolean (re-find mark row))
+              back (boolean (re-find mark prev))
+              blank (str/blank? prev)
+              gap (and list (not back) (not blank) (pos? idx))]
+          (recur (inc idx) (if gap (conj out "" row) (conj out row))))
+        (str/join "\n" out)))))
 
 (defn tablerows
   "Remove blank lines between markdown table rows."
@@ -227,7 +239,7 @@
   "Remove list markers before table rows."
   [text]
   (let [rows (str/split (str text) #"\n" -1)
-        rule #"^\s*[*+-]\s+(\\|.*)$"
+        rule #"^\s*[*+-]\s+([|].*)$"
         mark #"^\s*\d+[.)]\s+(\|.*)$"]
     (loop [idx 0 out []]
       (if (< idx (count rows))

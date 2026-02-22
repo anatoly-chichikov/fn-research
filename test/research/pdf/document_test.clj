@@ -1,6 +1,7 @@
 (ns research.pdf.document-test
   (:require [clojure.string :as str]
             [clojure.test :refer [deftest is]]
+            [markdown.core :as md]
             [research.domain.result :as result]
             [research.domain.session :as session]
             [research.domain.task :as task]
@@ -149,6 +150,16 @@
         view (text/tablelead text)]
     (is (= goal view)
         "Table indentation was not removed")))
+
+(deftest the-document-tablelead-preserves-list-items
+  (let [rng (gen/ids 18095)
+        head (gen/cyrillic rng 6)
+        left (gen/hiragana rng 6)
+        right (gen/greek rng 6)
+        text (str "**" head ":**\n- " left "\n- " right)
+        view (text/tablelead text)]
+    (is (= text view)
+        "Tablelead stripped markers from non-table list items")))
 
 (deftest the-document-renders-exploration-brief-title
   (let [rng (gen/ids 18005)
@@ -1643,3 +1654,30 @@
         item (document/clean text)]
     (is (not (str/includes? item "utm_"))
         "utm fragments were not stripped from text")))
+
+(deftest the-document-normalize-keeps-consecutive-items-tight
+  (let [rng (gen/ids 18091)
+        head (gen/cyrillic rng 6)
+        left (gen/hiragana rng 6)
+        mid (gen/greek rng 6)
+        tail (gen/armenian rng 6)
+        text (str "**" head ":**\n- " left "\n- " mid "\n- " tail)
+        item (document/normalize text)
+        gaps (count (re-seq #"\n\n" item))]
+    (is (= 1 gaps)
+        "Normalize inserted blank lines between consecutive list items")))
+
+(deftest the-document-normalize-renders-bold-heading-with-list-as-ul
+  (let [rng (gen/ids 18093)
+        head (gen/cyrillic rng 6)
+        left (gen/hiragana rng 6)
+        mid (gen/greek rng 6)
+        tail (gen/armenian rng 6)
+        text (str "**" head ":**\n- **"
+                  left "**: " mid "\n- **"
+                  tail "**: " head)
+        item (document/normalize text)
+        html (md/md-to-html-string item)
+        hits (count (re-seq #"<li>" html))]
+    (is (= 2 hits)
+        "Bold heading with list did not render as list items")))
