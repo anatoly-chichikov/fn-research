@@ -51,7 +51,8 @@ ask language Which language for the result?
   - Spanish
   - Greek
 
-rule Always normalize language to canonical English form: "English", "Russian", "Spanish", "Greek" — regardless of user input (ru, рус, en, eng, ελληνικά, etc.)
+rule Infer language from the user's message language — if user wrote in Russian, use Russian; if in English, use English. Only ask explicitly when genuinely ambiguous (e.g. roughly equal mix of two languages in the same message).
+rule Always normalize language to canonical English form: "English", "Russian", "Spanish", "Greek" — regardless of user input or inferred language (ru, рус, en, eng, ελληνικά, etc.)
 rule After language selected — switch all follow-up questions to that language
 
 ask provider (skip if inline) Which data provider?

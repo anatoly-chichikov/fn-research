@@ -1,156 +1,161 @@
 # (defn research [ ])
 
-An experiment in agent-first software.
+Every deep research tool works the same way: you type a topic, it searches, you get 30 pages of vaguely relevant text. Nobody asked what you actually wanted to know.
 
-## What is this?
+This tool builds a research brief *with you* before searching anything.
 
-AI agents let you build serious tools just for yourself — iterate daily, adapt as you go. This is that kind of project. A deep research tool for personal use.
+## How the brief works
 
-Beyond that, the same agent can be part of the interface itself. You describe what you want, it asks clarifying questions, then handles execution. Follow-up dialogue isn't a bug — it's how the agent learns what you actually need before acting.
+You type `rs <topic>` and the agent builds a structured brief in two phases — root topics, then sub-topics — with you in the loop.
 
-## How it works
+**Phase 1** — the agent generates 3 root topics from your request. Each one is a specific investigative angle, not a generic heading. Each comes with three properties — depth, novelty, applied — on a 1–5 scale. These aren't just labels: you can change them. Say "make the first one deeper" or "less theoretical" — the agent will reformulate the topic to match. Same with the topics themselves: replace, rewrite, swap — the brief doesn't lock until you say so.
 
-⚠️ **All requests must start with a [DSL](#DSL) command** — e.g. _**rs** quantum computing_. Without this prefix, the agent won't respond.
+The agent also writes a summary of how it understood your intent — "I think you want X because Y, I'm assuming Z about your context, I'm leaving W out of scope." If it got you wrong, say so and it regenerates from scratch.
 
-1. **You describe the task** — in natural language, to your AI agent
-2. **Agent asks follow-ups** — clarifying questions are part of the design, not a bug
-3. **Agent runs the research** — handles Docker and parameters
-4. **You get a PDF report** — Hokusai-inspired aesthetic, pleasant to read
+**Phase 2** — 3 sub-topics per root topic. Same interactive refinement. You adjust, it reformulates. No overlap, no generic filler.
 
-The follow-up dialogue is intentional. The agent learns what you actually need before executing — language, depth level, specific angles to explore.
+The final brief is a tight 3×3 structure that goes to the research engine. Properties and reasoning get stripped — the engine sees only focused, self-contained research questions. But you saw the full reasoning before approving.
 
-<p align="center">
-  <img src="./examples/human-in-the-loop.png" width="50%" alt="Human-in-the-loop dialogue">
-</p>
-
-**Tip:** Use plan mode for the best experience. Follow-up questions appear as selectors, making choices easier.
-
-## Quick Start
-
-**This is not a CLI tool.** You don't run commands directly in your terminal. Instead:
-
-1. Open this project folder in an AI coding agent (Claude Code, Codex, Cursor, Junie, etc.)
-2. Talk to the agent using the DSL commands below
-3. The agent handles Docker, APIs, and file generation for you
+The difference: instead of searching "quantum computing" and hoping for the best, you're sending a brief that says exactly which 9 angles to investigate and at what depth.
 
 ```
-# In your AI agent, just type:
-rs quantum computing applications
-
-# The agent will:
-# - Ask clarifying questions (language, depth, focus)
-# - Build and run Docker containers
-# - Generate a PDF report in ./output/
+rs parallel ultra Quantum computing
 ```
 
-The agent reads `AGENTS.md` for instructions. You focus on what you want to research — the agent handles how. `AGENTS.md` is the default instruction file for agents.
+> **Summary:** I'm reading this as curiosity about where quantum computing actually
+> stands — not a textbook intro, but an honest look at what works, what doesn't yet,
+> and what matters for someone tracking the field seriously. I'm assuming you have
+> technical literacy but aren't building quantum circuits yourself. I'm leaving out
+> quantum cryptography and post-quantum encryption as a separate domain, and not
+> covering the physics curriculum (Hilbert spaces, Dirac notation) unless it serves
+> a practical point.
+>
+> ---
+>
+> **1. The qubit gap between laboratory demonstrations and useful computation —
+>    what current hardware can and cannot do, and where the real bottlenecks are**
+>    This is the ground truth question: how many qubits actually work together
+>    reliably, what error rates look like today, and why "1000 qubits" headlines
+>    don't mean what they seem to mean.
+>
+>    **depth:** `4` · **novelty:** `3` · **applied:** `3`
+>
+> ---
+>
+> **2. Error correction as the unsolved engineering problem that determines whether
+>    quantum computing scales — current approaches, resource overhead, and realistic
+>    timelines**
+>    Everyone agrees fault-tolerant quantum needs error correction. The interesting
+>    part is how expensive it is: thousands of physical qubits per logical qubit.
+>    This topic digs into whether that cost is coming down fast enough.
+>
+>    **depth:** `5` · **novelty:** `4` · **applied:** `2`
+>
+> ---
+>
+> **3. The algorithms that would actually justify building a quantum computer —
+>    which problems have proven quantum speedup and which industries would feel
+>    it first**
+>    Shor's algorithm broke RSA in theory, Grover gives a square-root speedup for
+>    search — but what's the realistic portfolio of problems where quantum beats
+>    classical in practice, not just asymptotically?
+>
+>    **depth:** `3` · **novelty:** `3` · **applied:** `5`
 
-### Examples
+## The output
+
+I like Hokusai, so the PDFs have a woodblock print vibe — generated covers, muted colors, wave motifs. Inside it's clean: good typography, table of contents, styled citations. Nothing fancy, just not ugly.
 
 Both engines researching "AI transformation of academic research":
 - [Parallel example](./examples/parallel-ai-academic-research.pdf) — 21 pages, strategic focus
 - [Valyu example](./examples/valyu-ai-academic-research.pdf) — 25 pages, data-rich
 
-## Agent adaptability
+## Quick start
 
-If something breaks (environment issues, missing dependencies, config problems), the agent can fix it. You don't need to understand the infrastructure details — that's the agent's job.
+This is not a CLI tool. You use it through an AI coding agent:
 
-## DSL
+1. Open the project folder in Claude Code, Codex, Cursor, or Junie
+2. Type `rs <topic>` — the agent handles the rest
+3. Answer the agent's questions (language, depth, focus angles)
+4. Get a PDF in `./output/`
 
-Check `AGENTS.md` for the agent's instruction set. It's simple — a few commands like:
-- `rs <topic>` for new research
-- `frk` for forking existing research (re-brief or deep-dive)
-- `st` for status
-- `pdf <topic>` for regeneration if needed. 
-The agent will understand what to do even with incomplete or vague inputs.
+The agent reads `AGENTS.md` for its instructions. You focus on what to research — it handles Docker, APIs, and file generation.
 
-When you run `rs <topic>`, the agent walks you through the entire flow — asks about language, depth, refines the topic with you. At the end, you get a ready PDF in the output folder.
+```
+rs parallel ultra Rust ownership model
 
-When you run `frk <follow ups>`, it starts a new research run based on an existing one: either adjust the original brief (re-brief) or dig deeper into a specific part of the results (deep-dive). The forked run creates a fresh session and a new PDF, while keeping the original intact.
-
-## Testing
-
-Run tests in Docker:
-
-```bash
-docker build -t research-test -f Dockerfile.test .
-docker run --rm research-test :unit
-docker run --rm -v "$PWD/tmp_cache:/app/tmp_cache" research-test :integration
+# The agent will:
+# - Ask about language, confirm provider/processor
+# - Build a 3×3 brief interactively with you
+# - Launch a Docker container
+# - Generate a PDF report in ./output/
 ```
 
-For agents: use `tst` command.
+## Forking research
 
-Local run:
+Already have a research run and want to go further? `frk` lets you:
+
+- **Re-brief** — adjust the original brief and run again with different angles or depth
+- **Deep-dive** — pick a specific section from the results and investigate it deeper
+
+Both modes show you a diff of the original vs. updated brief before launching. The fork creates a new session — the original stays intact.
+
+## Commands
+
+| Command | What it does |
+|---------|-------------|
+| `rs [provider] [processor] <topic>` | New research run |
+| `frk` | Fork existing research |
+| `st` | List all sessions with status and PDF paths |
+| `pdf <topic>` | Regenerate PDF for a session |
+| `tst` | Run tests in Docker |
+
+## Providers
+
+| | Parallel | Valyu | XAI |
+|---|----------|-------|-----|
+| **Sources** | Open internet | Open internet + academic & proprietary | Web + X/social |
+| **Strength** | Strategic synthesis | Data-rich analysis, better citations | Social signals and discourse |
+| **Best for** | Business decisions, implementation planning | Academic research, evidence gathering | Social coverage, trending topics |
+| **Processors** | pro, ultra, ultra2x, ultra4x, ultra8x | fast, standard, heavy | social, full |
+| **Speed** | 10–40 min | 30–90 min | 5–20 min |
+
+Use `all` as provider (e.g. `rs all ultra <topic>`) to run Parallel then Valyu in the same session.
+
+## Setup
+
+### Requirements
+
+- Java 17+, Leiningen, Docker
+- An AI coding agent (Claude Code, Codex, Cursor, Junie)
+
+### Environment variables
 
 ```bash
-lein run
+export PARALLEL_API_KEY="..."   # Parallel AI access
+export VALYU_API_KEY="..."      # Valyu access
+export XAI_API_KEY="..."        # XAI access
+export GEMINI_API_KEY="..."     # Optional: cover image generation
+export REPORT_FOR="..."         # Optional: name in report attribution
 ```
 
-Local tests:
-
-```bash
-lein test :unit
-lein test :integration
-```
-
-Pre-commit runs unit tests:
-
-```bash
-pre-commit run --all-files
-```
-
-## Requirements
-
-- Java 17+
-- Leiningen
-- Docker
-- An AI coding agent (Claude Code, Codex, Cursor, Junie, etc.)
-
-## Envs
-
-- `PARALLEL_API_KEY`: Parallel AI API access for research runs
-- `VALYU_API_KEY`: Valyu API access for research runs
-- `XAI_API_KEY`: XAI API access for social/X runs
-- `GEMINI_API_KEY` (optional): Gemini API access for cover image generation, empty means no image
-- `REPORT_FOR` (optional): name inserted into report attribution line, empty means no name
-
-## Python dependencies (uv)
-
-Python deps are declared in `deps.edn` under `:python :deps`. `pyproject.toml` mirrors the same list for `uv sync`.
-
-Local setup:
+### Python dependencies
 
 ```bash
 uv sync
 ```
 
-Optional override for XAI:
+### Testing
 
 ```bash
-export XAI_PYTHON="$PWD/.venv/bin/python"
+# Via agent:
+tst
+
+# Manual:
+docker build -t research-test -f Dockerfile.test .
+docker run --rm research-test :unit
+docker run --rm -v "$PWD/tmp_cache:/app/tmp_cache" research-test :integration
 ```
-
-## Providers
-
-Three deep research engines are available:
-
-| Aspect | Parallel | Valyu | XAI |
-|--------|----------|-------|-----|
-| **Sources** | Open internet | Open internet + Academic & proprietary sources | Web + X tools |
-| **Strength** | Strategic synthesis, executive summaries | Data-rich analysis, better citations | Social-heavy coverage |
-| **Best for** | Business decisions, implementation planning | Academic research, evidence gathering | Social signals and discourse |
-| **Processors** | pro, ultra, ultra2x, ultra4x, ultra8x | fast, standard, heavy | social, full |
-| **Speed** | 10-40 min | 30-90 min | 5-20 min |
-| **Price** | Affordable | Higher (~3-4x) | Varies |
-
-You can also pass `--provider all` to run both providers sequentially in
-the same session folder.
-
-### When to choose
-
-- **Parallel**: You need actionable recommendations, broad internet coverage, or faster turnaround
-- **Valyu**: You need academic sources, proper citations, or comprehensive data analysis
-- **XAI**: You need social coverage and X search — use `social` for social-only web or `full` for unrestricted web search
 
 ## License
 
