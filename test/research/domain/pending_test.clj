@@ -24,20 +24,21 @@
 (deftest the-pending-returns-query
   (let [rng (gen/ids 13003)
         run (gen/cyrillic rng 6)
-        query (str (gen/hiragana rng 6)
-                   "\n\nResearch:\n"
-                   (gen/greek rng 4))
+        topic (gen/hiragana rng 6)
+        item (gen/greek rng 4)
+        query (str topic "\n\nResearch:\n" item)
         processor (gen/greek rng 6)
         language (gen/cyrillic rng 6)
         provider (gen/cyrillic rng 6)
-        item (pending/pending {:run_id run
+        pend (pending/pending {:run_id run
                                :query query
                                :processor processor
                                :language language
                                :provider provider})
-        text (pending/query item)
+        text (pending/query pend)
         ok (and (str/includes? text language)
-                (str/ends-with? text query))]
+                (str/includes? text topic)
+                (str/includes? text item))]
     (is ok "Pending query did not include language and query")))
 
 (deftest the-pending-returns-processor
@@ -292,6 +293,25 @@
         node (first items)]
     (is (= child (:text (first (:items node))))
         "Tab-indented sub-item was not nested under parent")))
+
+(deftest the-pending-renders-numbered-brief
+  (let [rng (gen/ids 13029)
+        run (gen/cyrillic rng 6)
+        root (gen/greek rng 5)
+        child (gen/armenian rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n"
+                   root
+                   "\n\t"
+                   child)
+        item (pending/pending {:run_id run
+                               :query query
+                               :processor (gen/greek rng 6)
+                               :language (gen/cyrillic rng 6)
+                               :provider (gen/cyrillic rng 6)})
+        text (pending/query item)]
+    (is (str/includes? text "1.1. ")
+        "Rendered brief did not contain hierarchical numbering")))
 
 (deftest the-pending-parses-double-tab-items-at-depth-three
   (let [rng (gen/ids 13027)

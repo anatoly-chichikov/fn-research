@@ -42,15 +42,17 @@
 (defrecord Parallel [key base time]
   research/Researchable
   (start [_ query processor]
-    (let [url (str base "/v1/tasks/runs?beta=true")
+    (let [url (str base "/v1/tasks/runs")
+          spec (str "Include as many details"
+                    " from collected sources as possible.")
           body {:input query
                 :processor processor
                 :enable_events true
-                :task_spec {:output_schema {:type "text"}}}
+                :task_spec {:output_schema {:type "text"
+                                            :description spec}}}
           head {"x-api-key" key
                 "Content-Type" "application/json"
-                "parallel-beta" (str "search-extract-2025-10-10,"
-                                     "events-sse-2025-07-24")}
+                "parallel-beta" "events-sse-2025-07-24"}
           net (:net time)
           response @(request/post net url {:headers head
                                            :body
@@ -69,8 +71,7 @@
     (let [url (str base "/v1beta/tasks/runs/" id "/events")
           head {"x-api-key" key
                 "Accept" "text/event-stream"
-                "parallel-beta" (str "search-extract-2025-10-10,"
-                                     "events-sse-2025-07-24")}
+                "parallel-beta" "events-sse-2025-07-24"}
           net (:net time)
           response @(request/get net url {:headers head
                                           :as :stream

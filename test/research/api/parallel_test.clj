@@ -138,6 +138,24 @@
         result (research/stream client (str "trun_" (gen/uuid rng)))]
     (is result "Stream did not complete")))
 
+(deftest the-parallel-start-sends-output-description
+  (let [rng (gen/ids 16021)
+        holder (atom "")]
+    (with-redefs [parallel/env (fn [_] "key")
+                  http/post (fn [_ opts]
+                              (reset! holder (:body opts))
+                              (delay {:status 200
+                                      :body (json/write-value-as-string
+                                             {:run_id "trun_x"})}))]
+      (let [client (parallel/parallel)]
+        (research/start client (gen/cyrillic rng 6) "ultra")))
+    (let [data (json/read-value
+                @holder
+                (json/object-mapper {:decode-key-fn keyword}))
+          desc (get-in data [:task_spec :output_schema :description])]
+      (is (str/includes? (str desc) "details")
+          "Output description did not include detail guidance"))))
+
 (deftest the-parallel-clean-removes-periods
   (let [rng (gen/ids 16019)
         text (gen/cyrillic rng 6)

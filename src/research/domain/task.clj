@@ -139,23 +139,23 @@
       items)))
 
 (defn- lines
-  "Render nested items into tab-indented list."
-  [items depth]
-  (let [pad (apply str (repeat depth "\t"))]
-    (loop [idx 0 list []]
-      (if (< idx (count items))
-        (let [item (nth items idx)
-              text (str/trim (str (or (:text item) "")))
-              nest (or (:items item) [])
-              rows (lines nest (inc depth))
-              line (if (str/blank? text) nil (str pad text))
-              list (cond
-                     (and (nil? line) (seq rows)) (into list rows)
-                     (nil? line) list
-                     (seq rows) (into (conj list line) rows)
-                     :else (conj list line))]
-          (recur (inc idx) list))
-        list))))
+  "Render nested items into numbered list."
+  [items prefix]
+  (loop [idx 0 list []]
+    (if (< idx (count items))
+      (let [item (nth items idx)
+            text (str/trim (str (or (:text item) "")))
+            nest (or (:items item) [])
+            num (str (when-not (str/blank? prefix) (str prefix ".")) (inc idx))
+            rows (lines nest num)
+            line (if (str/blank? text) nil (str num ". " text))
+            list (cond
+                   (and (nil? line) (seq rows)) (into list rows)
+                   (nil? line) list
+                   (seq rows) (into (conj list line) rows)
+                   :else (conj list line))]
+        (recur (inc idx) list))
+      list)))
 
 (defn- render
   "Render brief into query text."
@@ -165,7 +165,7 @@
         topic (str (or (:topic brief) ""))
         items (or (:items brief) [])
         items (mapv node items)
-        rows (lines items 0)
+        rows (lines items "")
         tail (str/join "\n" rows)
         body (cond
                (seq rows)

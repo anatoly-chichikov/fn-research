@@ -381,6 +381,28 @@
     (is (= child (:text (first (:items node))))
         "Tab-indented sub-item was not nested under parent")))
 
+(deftest the-task-renders-numbered-brief
+  (let [rng (gen/ids 11033)
+        day (inc (.nextInt rng 8))
+        hour (inc (.nextInt rng 8))
+        time (str "2026-01-0" day "T0" hour ":00:00")
+        root (gen/greek rng 5)
+        child (gen/armenian rng 5)
+        query (str (gen/cyrillic rng 6)
+                   "\n\nResearch:\n"
+                   root
+                   "\n\t"
+                   child)
+        item (task/task {:id (gen/uuid rng)
+                         :query query
+                         :status (gen/greek rng 6)
+                         :language (gen/cyrillic rng 5)
+                         :service (gen/cyrillic rng 4)
+                         :created time})
+        text (task/query item)]
+    (is (str/includes? text "1.1. ")
+        "Rendered brief did not contain hierarchical numbering")))
+
 (deftest the-task-parses-double-tab-items-at-depth-three
   (let [rng (gen/ids 11031)
         root (gen/greek rng 5)
