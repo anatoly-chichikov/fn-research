@@ -1,5 +1,7 @@
 use crate::ids;
 use crate::pending::{self, Pendinged};
+use crate::processor::{ParallelMode, Processor};
+use crate::provider::Provider;
 
 #[test]
 fn the_pending_returns_identifier() {
@@ -8,15 +10,12 @@ fn the_pending_returns_identifier() {
     let topic_part = ids::hiragana(&mut rng, 6);
     let item_part = ids::greek(&mut rng, 4);
     let query = format!("{}\n\nResearch:\n{}", topic_part, item_part);
-    let processor = ids::greek(&mut rng, 6);
-    let language = ids::cyrillic(&mut rng, 6);
-    let provider = ids::cyrillic(&mut rng, 6);
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": processor,
-        "language": language,
-        "provider": provider
+        "processor": "ultra",
+        "language": "English",
+        "provider": "parallel"
     }));
     assert_eq!(
         run,
@@ -32,18 +31,15 @@ fn the_pending_returns_query() {
     let topic = ids::hiragana(&mut rng, 6);
     let item_text = ids::greek(&mut rng, 4);
     let query = format!("{}\n\nResearch:\n{}", topic, item_text);
-    let processor = ids::greek(&mut rng, 6);
-    let language = ids::cyrillic(&mut rng, 6);
-    let provider = ids::cyrillic(&mut rng, 6);
     let pend = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": processor,
-        "language": language,
-        "provider": provider
+        "processor": "pro",
+        "language": "Russian",
+        "provider": "parallel"
     }));
     let text = pend.query();
-    let ok = text.contains(&language) && text.contains(&topic) && text.contains(&item_text);
+    let ok = text.contains("Russian") && text.contains(&topic) && text.contains(&item_text);
     assert!(ok, "Pending query did not include language and query");
 }
 
@@ -54,18 +50,15 @@ fn the_pending_returns_processor() {
     let topic_part = ids::hiragana(&mut rng, 6);
     let item_part = ids::greek(&mut rng, 4);
     let query = format!("{}\n\nResearch:\n{}", topic_part, item_part);
-    let processor = ids::greek(&mut rng, 6);
-    let language = ids::cyrillic(&mut rng, 6);
-    let provider = ids::cyrillic(&mut rng, 6);
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": processor,
-        "language": language,
-        "provider": provider
+        "processor": "ultra8x",
+        "language": "English",
+        "provider": "parallel"
     }));
     assert_eq!(
-        processor,
+        &Processor::Parallel(ParallelMode::Ultra8x),
         item.processor(),
         "Pending processor did not match provided value"
     );
@@ -78,18 +71,15 @@ fn the_pending_returns_language() {
     let topic_part = ids::hiragana(&mut rng, 6);
     let item_part = ids::greek(&mut rng, 4);
     let query = format!("{}\n\nResearch:\n{}", topic_part, item_part);
-    let processor = ids::greek(&mut rng, 6);
-    let language = ids::cyrillic(&mut rng, 6);
-    let provider = ids::cyrillic(&mut rng, 6);
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": processor,
-        "language": language,
-        "provider": provider
+        "processor": "pro",
+        "language": "Greek",
+        "provider": "parallel"
     }));
     assert_eq!(
-        language,
+        "Greek",
         item.language(),
         "Pending language did not match provided value"
     );
@@ -102,15 +92,12 @@ fn the_pending_serializes_correctly() {
     let topic_part = ids::hiragana(&mut rng, 6);
     let item_part = ids::greek(&mut rng, 4);
     let query = format!("{}\n\nResearch:\n{}", topic_part, item_part);
-    let processor = ids::greek(&mut rng, 6);
-    let language = ids::cyrillic(&mut rng, 6);
-    let provider = ids::cyrillic(&mut rng, 6);
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": processor,
-        "language": language,
-        "provider": provider
+        "processor": "ultra",
+        "language": "English",
+        "provider": "parallel"
     }));
     let data = item.data();
     let brief_val = data.get("brief").unwrap();
@@ -148,9 +135,9 @@ fn the_pending_parses_nested_query_items() {
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 6),
-        "provider": ids::cyrillic(&mut rng, 6)
+        "processor": "pro",
+        "language": "English",
+        "provider": "parallel"
     }));
     let brief = item.brief();
     let questions = &brief.questions;
@@ -165,15 +152,12 @@ fn the_pending_deserializes_correctly() {
     let mut rng = ids::ids(13011);
     let run = ids::cyrillic(&mut rng, 6);
     let query = ids::hiragana(&mut rng, 6);
-    let processor = ids::greek(&mut rng, 6);
-    let language = ids::cyrillic(&mut rng, 6);
-    let provider = ids::cyrillic(&mut rng, 6);
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": processor,
-        "language": language,
-        "provider": provider
+        "processor": "fast",
+        "language": "English",
+        "provider": "valyu"
     }));
     assert_eq!(
         run,
@@ -187,18 +171,15 @@ fn the_pending_returns_provider() {
     let mut rng = ids::ids(13013);
     let run = ids::cyrillic(&mut rng, 6);
     let query = ids::hiragana(&mut rng, 6);
-    let processor = ids::greek(&mut rng, 6);
-    let language = ids::cyrillic(&mut rng, 6);
-    let name = ids::cyrillic(&mut rng, 6);
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": processor,
-        "language": language,
-        "provider": name
+        "processor": "social",
+        "language": "English",
+        "provider": "xai"
     }));
     assert_eq!(
-        name,
+        &Provider::Xai,
         item.provider(),
         "Pending provider did not match provided value"
     );
@@ -215,9 +196,9 @@ fn the_pending_prefers_explicit_title_in_brief() {
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 6),
-        "provider": ids::cyrillic(&mut rng, 6),
+        "processor": "pro",
+        "language": "English",
+        "provider": "parallel",
         "topic": mark
     }));
     let brief = item.brief();
@@ -232,19 +213,16 @@ fn the_pending_serializes_provider() {
     let mut rng = ids::ids(13015);
     let run = ids::cyrillic(&mut rng, 6);
     let query = ids::hiragana(&mut rng, 6);
-    let processor = ids::greek(&mut rng, 6);
-    let language = ids::cyrillic(&mut rng, 6);
-    let name = ids::hiragana(&mut rng, 6);
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": processor,
-        "language": language,
-        "provider": name
+        "processor": "standard",
+        "language": "English",
+        "provider": "valyu"
     }));
     let data = item.data();
     assert_eq!(
-        name,
+        "valyu",
         data.get("provider").unwrap().as_str().unwrap(),
         "Pending serialize did not include provider"
     );
@@ -265,9 +243,9 @@ fn the_pending_parses_compound_numbered_items_at_depth_two() {
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 6),
-        "provider": ids::cyrillic(&mut rng, 6)
+        "processor": "ultra",
+        "language": "English",
+        "provider": "parallel"
     }));
     let brief = item.brief();
     let node = &brief.questions[0];
@@ -292,9 +270,9 @@ fn the_pending_parses_indented_compound_items_at_depth_two() {
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 6),
-        "provider": ids::cyrillic(&mut rng, 6)
+        "processor": "pro",
+        "language": "English",
+        "provider": "parallel"
     }));
     let brief = item.brief();
     let node = &brief.questions[0];
@@ -319,9 +297,9 @@ fn the_pending_parses_triple_compound_items_at_depth_three() {
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 6),
-        "provider": ids::cyrillic(&mut rng, 6)
+        "processor": "ultra",
+        "language": "English",
+        "provider": "parallel"
     }));
     let brief = item.brief();
     let node = &brief.questions[0];
@@ -347,9 +325,9 @@ fn the_pending_parses_tab_indented_items() {
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 6),
-        "provider": ids::cyrillic(&mut rng, 6)
+        "processor": "pro",
+        "language": "English",
+        "provider": "parallel"
     }));
     let brief = item.brief();
     let node = &brief.questions[0];
@@ -370,9 +348,9 @@ fn the_pending_renders_numbered_brief() {
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 6),
-        "provider": ids::cyrillic(&mut rng, 6)
+        "processor": "pro",
+        "language": "English",
+        "provider": "parallel"
     }));
     let text = item.query();
     assert!(
@@ -396,9 +374,9 @@ fn the_pending_parses_double_tab_items_at_depth_three() {
     let item = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 6),
-        "provider": ids::cyrillic(&mut rng, 6)
+        "processor": "pro",
+        "language": "English",
+        "provider": "parallel"
     }));
     let brief = item.brief();
     let node = &brief.questions[0];

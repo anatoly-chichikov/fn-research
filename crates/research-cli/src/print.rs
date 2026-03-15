@@ -71,14 +71,7 @@ pub fn render(path: &Path, out: &Path, id: &str, html: bool) {
         Some(item) => {
             let provider = if !item.tasks().is_empty() {
                 let last = item.tasks().last().unwrap();
-                let name = last.provider();
-                if name == "x.ai" {
-                    "xai".to_string()
-                } else if name.ends_with(".ai") {
-                    name.split('.').next().unwrap_or(name).to_string()
-                } else {
-                    name.to_string()
-                }
+                last.provider().to_string()
             } else {
                 "parallel".to_string()
             };

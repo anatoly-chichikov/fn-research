@@ -1,4 +1,5 @@
 use crate::ids;
+use crate::provider::Provider;
 use crate::result::{self, Serialized};
 use crate::task::{self, Tasked};
 
@@ -9,14 +10,13 @@ fn the_task_generates_unique_id() {
     let query = ids::cyrillic(&mut rng, 6);
     let status = ids::cyrillic(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 5);
-    let service = ids::cyrillic(&mut rng, 4);
     let summary = ids::cyrillic(&mut rng, 6);
     let value = result::ResearchReport::new(&summary, vec![]);
     let item = task::task(&serde_json::json!({
         "query": query,
         "status": status,
         "language": language,
-        "service": service,
+        "service": "parallel.ai",
         "result": value.data(),
         "created": time
     }));
@@ -30,7 +30,6 @@ fn the_task_returns_provided_query() {
     let query = ids::hiragana(&mut rng, 7);
     let status = ids::cyrillic(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 5);
-    let service = ids::cyrillic(&mut rng, 4);
     let summary = ids::cyrillic(&mut rng, 6);
     let id = ids::uuid(&mut rng);
     let value = result::ResearchReport::new(&summary, vec![]);
@@ -39,7 +38,7 @@ fn the_task_returns_provided_query() {
         "query": query,
         "status": status,
         "language": language,
-        "service": service,
+        "service": "valyu.ai",
         "result": value.data(),
         "created": time
     }));
@@ -55,7 +54,6 @@ fn the_task_returns_provided_status() {
     let status = ids::greek(&mut rng, 6);
     let query = ids::cyrillic(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 5);
-    let service = ids::cyrillic(&mut rng, 4);
     let summary = ids::cyrillic(&mut rng, 6);
     let id = ids::uuid(&mut rng);
     let value = result::ResearchReport::new(&summary, vec![]);
@@ -64,7 +62,7 @@ fn the_task_returns_provided_status() {
         "query": query,
         "status": status,
         "language": language,
-        "service": service,
+        "service": "parallel.ai",
         "result": value.data(),
         "created": time
     }));
@@ -82,7 +80,6 @@ fn the_task_complete_returns_new_task() {
     let query = ids::cyrillic(&mut rng, 6);
     let status = ids::cyrillic(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 5);
-    let service = ids::cyrillic(&mut rng, 4);
     let summary = ids::cyrillic(&mut rng, 5);
     let id = ids::uuid(&mut rng);
     let value = result::ResearchReport::new(&summary, vec![]);
@@ -91,7 +88,8 @@ fn the_task_complete_returns_new_task() {
         "query": query,
         "status": status,
         "language": language,
-        "service": service,
+        "service": "x.ai",
+        "processor": "social",
         "result": value.data(),
         "created": time
     }));
@@ -113,7 +111,6 @@ fn the_task_complete_preserves_id() {
     let query = ids::cyrillic(&mut rng, 6);
     let status = ids::cyrillic(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 5);
-    let service = ids::cyrillic(&mut rng, 4);
     let summary = ids::cyrillic(&mut rng, 6);
     let id = ids::uuid(&mut rng);
     let value = result::ResearchReport::new(&summary, vec![]);
@@ -122,7 +119,8 @@ fn the_task_complete_preserves_id() {
         "query": query,
         "status": status,
         "language": language,
-        "service": service,
+        "service": "parallel.ai",
+        "processor": "ultra",
         "result": value.data(),
         "created": time
     }));
@@ -144,7 +142,6 @@ fn the_task_complete_adds_timestamp() {
     let query = ids::cyrillic(&mut rng, 6);
     let status = ids::cyrillic(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 5);
-    let service = ids::cyrillic(&mut rng, 4);
     let summary = ids::cyrillic(&mut rng, 6);
     let id = ids::uuid(&mut rng);
     let value = result::ResearchReport::new(&summary, vec![]);
@@ -153,7 +150,8 @@ fn the_task_complete_adds_timestamp() {
         "query": query,
         "status": status,
         "language": language,
-        "service": service,
+        "service": "valyu.ai",
+        "processor": "standard",
         "result": value.data(),
         "created": time
     }));
@@ -175,9 +173,7 @@ fn the_task_omits_query_serialization() {
     let item_part = ids::greek(&mut rng, 4);
     let query = format!("{}\n\nResearch:\n{}", topic_part, item_part);
     let status = ids::cyrillic(&mut rng, 6);
-    let processor = ids::greek(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 5);
-    let service = ids::cyrillic(&mut rng, 4);
     let summary = ids::cyrillic(&mut rng, 6);
     let id = ids::uuid(&mut rng);
     let value = result::ResearchReport::new(&summary, vec![]);
@@ -186,8 +182,8 @@ fn the_task_omits_query_serialization() {
         "query": query,
         "status": status,
         "language": language,
-        "service": service,
-        "processor": processor,
+        "service": "parallel.ai",
+        "processor": "ultra",
         "result": value.data(),
         "created": time
     }));
@@ -198,7 +194,7 @@ fn the_task_omits_query_serialization() {
     let ok = data.contains_key("brief")
         && brief.get("title").is_some()
         && brief.get("questions").is_some()
-        && data.get("processor").map(|v| v.as_str().unwrap()) == Some(&processor)
+        && data.get("processor").map(|v| v.as_str().unwrap()) == Some("ultra")
         && node.get("scope").is_some()
         && node.get("details").is_some()
         && brief.get("text").is_none()
@@ -220,7 +216,6 @@ fn the_task_renders_nested_brief_items() {
     let second = ids::hiragana(&mut rng, 5);
     let status = ids::greek(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 5);
-    let service = ids::cyrillic(&mut rng, 4);
     let summary = ids::cyrillic(&mut rng, 6);
     let id = ids::uuid(&mut rng);
     let value = result::ResearchReport::new(&summary, vec![]);
@@ -237,7 +232,8 @@ fn the_task_renders_nested_brief_items() {
         "brief": brief,
         "status": status,
         "language": language,
-        "service": service,
+        "service": "parallel.ai",
+        "processor": "pro",
         "result": value.data(),
         "created": time
     }));
@@ -262,9 +258,9 @@ fn the_task_prefers_explicit_title_in_brief() {
     let item = task::task(&serde_json::json!({
         "id": id,
         "query": query,
-        "status": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 5),
-        "service": ids::cyrillic(&mut rng, 4),
+        "status": "completed",
+        "language": "English",
+        "service": "parallel.ai",
         "created": time,
         "topic": mark
     }));
@@ -279,7 +275,6 @@ fn the_task_deserializes_correctly() {
     let query = ids::cyrillic(&mut rng, 7);
     let status = ids::greek(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 5);
-    let service = ids::cyrillic(&mut rng, 4);
     let summary = ids::cyrillic(&mut rng, 6);
     let id = ids::uuid(&mut rng);
     let value = result::ResearchReport::new(&summary, vec![]);
@@ -288,7 +283,7 @@ fn the_task_deserializes_correctly() {
         "query": query,
         "status": status,
         "language": language,
-        "service": service,
+        "service": "parallel.ai",
         "result": value.data(),
         "created": time
     }));
@@ -309,9 +304,9 @@ fn the_task_parses_nested_query_items() {
     let item = task::task(&serde_json::json!({
         "id": id,
         "query": query,
-        "status": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 5),
-        "service": ids::cyrillic(&mut rng, 4),
+        "status": "completed",
+        "language": "English",
+        "service": "valyu.ai",
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
@@ -337,9 +332,9 @@ fn the_task_parses_compound_numbered_items_at_depth_two() {
     let item = task::task(&serde_json::json!({
         "id": id,
         "query": query,
-        "status": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 5),
-        "service": ids::cyrillic(&mut rng, 4),
+        "status": "completed",
+        "language": "English",
+        "service": "parallel.ai",
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
@@ -365,9 +360,10 @@ fn the_task_parses_indented_compound_items_at_depth_two() {
     let item = task::task(&serde_json::json!({
         "id": id,
         "query": query,
-        "status": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 5),
-        "service": ids::cyrillic(&mut rng, 4),
+        "status": "completed",
+        "language": "English",
+        "service": "x.ai",
+        "processor": "social",
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
@@ -393,9 +389,9 @@ fn the_task_parses_triple_compound_items_at_depth_three() {
     let item = task::task(&serde_json::json!({
         "id": id,
         "query": query,
-        "status": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 5),
-        "service": ids::cyrillic(&mut rng, 4),
+        "status": "completed",
+        "language": "English",
+        "service": "parallel.ai",
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
@@ -422,9 +418,9 @@ fn the_task_parses_tab_indented_items() {
     let item = task::task(&serde_json::json!({
         "id": id,
         "query": query,
-        "status": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 5),
-        "service": ids::cyrillic(&mut rng, 4),
+        "status": "completed",
+        "language": "English",
+        "service": "parallel.ai",
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
@@ -447,9 +443,10 @@ fn the_task_renders_numbered_brief() {
     let item = task::task(&serde_json::json!({
         "id": id,
         "query": query,
-        "status": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 5),
-        "service": ids::cyrillic(&mut rng, 4),
+        "status": "completed",
+        "language": "English",
+        "service": "valyu.ai",
+        "processor": "heavy",
         "created": time
     }));
     let text = item.query();
@@ -474,9 +471,9 @@ fn the_task_parses_double_tab_items_at_depth_three() {
     let item = task::task(&serde_json::json!({
         "id": id,
         "query": query,
-        "status": ids::greek(&mut rng, 6),
-        "language": ids::cyrillic(&mut rng, 5),
-        "service": ids::cyrillic(&mut rng, 4),
+        "status": "completed",
+        "language": "English",
+        "service": "parallel.ai",
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
@@ -485,5 +482,56 @@ fn the_task_parses_double_tab_items_at_depth_three() {
     assert_eq!(
         leaf, sub.details[0].scope,
         "Double-tab item was not nested at depth three"
+    );
+}
+
+#[test]
+fn the_task_parses_legacy_xai_ai_service() {
+    let mut rng = ids::ids(11035);
+    let time = ids::time(&mut rng);
+    let query = ids::cyrillic(&mut rng, 6);
+    let id = ids::uuid(&mut rng);
+    let summary = ids::cyrillic(&mut rng, 6);
+    let value = result::ResearchReport::new(&summary, vec![]);
+    let item = task::task(&serde_json::json!({
+        "id": id,
+        "query": query,
+        "status": "completed",
+        "language": "English",
+        "service": "xai.ai",
+        "processor": "social",
+        "result": value.data(),
+        "created": time
+    }));
+    assert_eq!(
+        &Provider::Xai,
+        item.provider(),
+        "Legacy xai.ai service was not parsed as Xai"
+    );
+}
+
+#[test]
+fn the_task_serializes_service_as_label() {
+    let mut rng = ids::ids(11037);
+    let time = ids::time(&mut rng);
+    let query = ids::cyrillic(&mut rng, 6);
+    let id = ids::uuid(&mut rng);
+    let summary = ids::cyrillic(&mut rng, 6);
+    let value = result::ResearchReport::new(&summary, vec![]);
+    let item = task::task(&serde_json::json!({
+        "id": id,
+        "query": query,
+        "status": "completed",
+        "language": "English",
+        "service": "x.ai",
+        "processor": "full",
+        "result": value.data(),
+        "created": time
+    }));
+    let data = item.data();
+    assert_eq!(
+        "x.ai",
+        data.get("service").unwrap().as_str().unwrap(),
+        "Serialized service was not the label form"
     );
 }

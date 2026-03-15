@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use crate::ids;
 use crate::pending::{self, Pendinged};
+use crate::processor::{ParallelMode, Processor, ValyuMode};
+use crate::provider::Provider;
 use crate::result::{self, Serialized};
 use crate::session::{self, Sessioned};
 use crate::task::{self, Tasked};
@@ -57,7 +59,6 @@ fn the_session_extend_adds_task() {
     let query = ids::cyrillic(&mut rng, 6);
     let status = ids::cyrillic(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 5);
-    let service = ids::cyrillic(&mut rng, 4);
     let summary = ids::cyrillic(&mut rng, 6);
     let value = result::ResearchReport::new(&summary, vec![]);
     let tid = ids::uuid(&mut rng);
@@ -66,7 +67,7 @@ fn the_session_extend_adds_task() {
         "query": query,
         "status": status,
         "language": language,
-        "service": service,
+        "service": "parallel.ai",
         "result": value.data(),
         "created": time
     }));
@@ -93,7 +94,6 @@ fn the_session_extend_preserves_id() {
     let query = ids::cyrillic(&mut rng, 6);
     let status = ids::cyrillic(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 5);
-    let service = ids::cyrillic(&mut rng, 4);
     let summary = ids::cyrillic(&mut rng, 6);
     let value = result::ResearchReport::new(&summary, vec![]);
     let tid = ids::uuid(&mut rng);
@@ -102,7 +102,7 @@ fn the_session_extend_preserves_id() {
         "query": query,
         "status": status,
         "language": language,
-        "service": service,
+        "service": "valyu.ai",
         "result": value.data(),
         "created": time
     }));
@@ -173,9 +173,7 @@ fn the_session_start_sets_pending() {
     let time = ids::time(&mut rng);
     let run = ids::cyrillic(&mut rng, 6);
     let query = ids::hiragana(&mut rng, 6);
-    let processor = ids::greek(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 6);
-    let provider = ids::cyrillic(&mut rng, 6);
     let id = ids::uuid(&mut rng);
     let item = session::session(&serde_json::json!({
         "id": id,
@@ -186,9 +184,9 @@ fn the_session_start_sets_pending() {
     let hold = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": processor,
+        "processor": "ultra",
         "language": language,
-        "provider": provider
+        "provider": "parallel"
     }));
     let output = item.start(hold);
     assert_eq!(
@@ -204,9 +202,7 @@ fn the_session_clear_removes_pending() {
     let time = ids::time(&mut rng);
     let run = ids::cyrillic(&mut rng, 6);
     let query = ids::hiragana(&mut rng, 6);
-    let processor = ids::greek(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 6);
-    let provider = ids::cyrillic(&mut rng, 6);
     let id = ids::uuid(&mut rng);
     let item = session::session(&serde_json::json!({
         "id": id,
@@ -216,9 +212,9 @@ fn the_session_clear_removes_pending() {
         "pending": {
             "run_id": run,
             "query": query,
-            "processor": processor,
+            "processor": "pro",
             "language": language,
-            "provider": provider
+            "provider": "parallel"
         }
     }));
     let output = item.reset();
@@ -231,16 +227,14 @@ fn the_session_serializes_pending() {
     let time = ids::time(&mut rng);
     let run = ids::cyrillic(&mut rng, 6);
     let query = ids::hiragana(&mut rng, 6);
-    let processor = ids::greek(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 6);
-    let provider = ids::cyrillic(&mut rng, 6);
     let id = ids::uuid(&mut rng);
     let hold = pending::pending(&serde_json::json!({
         "run_id": run,
         "query": query,
-        "processor": processor,
+        "processor": "ultra8x",
         "language": language,
-        "provider": provider
+        "provider": "parallel"
     }));
     let item = session::session(&serde_json::json!({
         "id": id,
@@ -264,9 +258,7 @@ fn the_session_deserializes_pending() {
     let time = ids::time(&mut rng);
     let run = ids::cyrillic(&mut rng, 6);
     let query = ids::hiragana(&mut rng, 6);
-    let processor = ids::greek(&mut rng, 6);
     let language = ids::cyrillic(&mut rng, 6);
-    let provider = ids::cyrillic(&mut rng, 6);
     let id = ids::uuid(&mut rng);
     let item = session::session(&serde_json::json!({
         "id": id,
@@ -276,9 +268,9 @@ fn the_session_deserializes_pending() {
         "pending": {
             "run_id": run,
             "query": query,
-            "processor": processor,
+            "processor": "fast",
             "language": language,
-            "provider": provider
+            "provider": "valyu"
         }
     }));
     assert_eq!(
@@ -314,17 +306,17 @@ fn the_session_returns_provided_processor() {
     let mut rng = ids::ids(12025);
     let time = ids::time(&mut rng);
     let topic = ids::cyrillic(&mut rng, 6);
-    let processor = ids::armenian(&mut rng, 5);
     let id = ids::uuid(&mut rng);
     let item = session::session(&serde_json::json!({
         "id": id,
         "topic": topic,
         "tasks": [],
         "created": time,
-        "processor": processor
+        "processor": "ultra",
+        "provider": "parallel"
     }));
     assert_eq!(
-        processor,
+        &Processor::Parallel(ParallelMode::Ultra),
         item.processor(),
         "Session processor did not match provided value"
     );
@@ -356,17 +348,16 @@ fn the_session_returns_provided_provider() {
     let mut rng = ids::ids(12029);
     let time = ids::time(&mut rng);
     let topic = ids::cyrillic(&mut rng, 6);
-    let provider = ids::greek(&mut rng, 5);
     let id = ids::uuid(&mut rng);
     let item = session::session(&serde_json::json!({
         "id": id,
         "topic": topic,
         "tasks": [],
         "created": time,
-        "provider": provider
+        "provider": "valyu"
     }));
     assert_eq!(
-        provider,
+        &Provider::Valyu,
         item.provider(),
         "Session provider did not match provided value"
     );
@@ -377,25 +368,47 @@ fn the_session_reconfigure_updates_provider() {
     let mut rng = ids::ids(12031);
     let time = ids::time(&mut rng);
     let topic = ids::cyrillic(&mut rng, 6);
-    let provider = ids::greek(&mut rng, 5);
-    let processor = ids::armenian(&mut rng, 5);
     let id = ids::uuid(&mut rng);
     let item = session::session(&serde_json::json!({
         "id": id,
         "topic": topic,
         "tasks": [],
         "created": time,
-        "provider": ids::cyrillic(&mut rng, 4),
-        "processor": ids::cyrillic(&mut rng, 4)
+        "provider": "parallel",
+        "processor": "pro"
     }));
     let mut opts = HashMap::new();
-    opts.insert("provider".to_string(), provider.clone());
-    opts.insert("processor".to_string(), processor.clone());
+    opts.insert("provider".to_string(), "valyu".to_string());
+    opts.insert("processor".to_string(), "standard".to_string());
     let updated = item.reconfigure(&opts);
     assert_eq!(
-        provider,
+        &Provider::Valyu,
         updated.provider(),
         "Reconfigured provider did not match"
+    );
+}
+
+#[test]
+fn the_session_reconfigure_updates_processor() {
+    let mut rng = ids::ids(12035);
+    let time = ids::time(&mut rng);
+    let topic = ids::cyrillic(&mut rng, 6);
+    let id = ids::uuid(&mut rng);
+    let item = session::session(&serde_json::json!({
+        "id": id,
+        "topic": topic,
+        "tasks": [],
+        "created": time,
+        "provider": "valyu",
+        "processor": "fast"
+    }));
+    let mut opts = HashMap::new();
+    opts.insert("processor".to_string(), "heavy".to_string());
+    let updated = item.reconfigure(&opts);
+    assert_eq!(
+        &Processor::Valyu(ValyuMode::Heavy),
+        updated.processor(),
+        "Reconfigured processor did not match"
     );
 }
 
@@ -405,9 +418,6 @@ fn the_session_serializes_research_params() {
     let time = ids::time(&mut rng);
     let topic = ids::cyrillic(&mut rng, 6);
     let query = ids::greek(&mut rng, 7);
-    let processor = ids::armenian(&mut rng, 5);
-    let language = ids::hiragana(&mut rng, 5);
-    let provider = ids::cyrillic(&mut rng, 5);
     let id = ids::uuid(&mut rng);
     let item = session::session(&serde_json::json!({
         "id": id,
@@ -415,14 +425,65 @@ fn the_session_serializes_research_params() {
         "tasks": [],
         "created": time,
         "query": query,
-        "processor": processor,
-        "language": language,
-        "provider": provider
+        "processor": "ultra",
+        "language": "English",
+        "provider": "parallel"
     }));
     let data = item.data();
     assert_eq!(
         query,
         data.get("query").unwrap().as_str().unwrap(),
         "Serialized query did not match original"
+    );
+}
+
+#[test]
+fn the_session_defaults_to_parallel_provider() {
+    let mut rng = ids::ids(12037);
+    let time = ids::time(&mut rng);
+    let topic = ids::cyrillic(&mut rng, 6);
+    let id = ids::uuid(&mut rng);
+    let item = session::session(&serde_json::json!({
+        "id": id,
+        "topic": topic,
+        "tasks": [],
+        "created": time
+    }));
+    assert_eq!(
+        &Provider::Parallel,
+        item.provider(),
+        "Session did not default to parallel provider"
+    );
+}
+
+#[test]
+fn the_session_parses_legacy_service_in_task() {
+    let mut rng = ids::ids(12039);
+    let time = ids::time(&mut rng);
+    let topic = ids::cyrillic(&mut rng, 6);
+    let id = ids::uuid(&mut rng);
+    let query = ids::greek(&mut rng, 6);
+    let summary = ids::cyrillic(&mut rng, 6);
+    let value = result::ResearchReport::new(&summary, vec![]);
+    let tid = ids::uuid(&mut rng);
+    let item = session::session(&serde_json::json!({
+        "id": id,
+        "topic": topic,
+        "tasks": [{
+            "id": tid,
+            "query": query,
+            "status": "completed",
+            "language": "English",
+            "service": "parallel.ai",
+            "processor": "ultra",
+            "result": value.data(),
+            "created": time
+        }],
+        "created": time
+    }));
+    assert_eq!(
+        &Provider::Parallel,
+        item.tasks()[0].provider(),
+        "Legacy parallel.ai service was not parsed"
     );
 }

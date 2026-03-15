@@ -6,6 +6,8 @@ mod support;
 
 use std::path::{Path, PathBuf};
 
+use research_domain::provider::Provider;
+
 use execute::Config;
 
 /// Parsed CLI arguments.
@@ -25,37 +27,35 @@ pub struct Options {
     /// Result language.
     pub language: String,
     /// Data provider.
-    pub provider: String,
+    pub provider: Provider,
     /// Output HTML instead of PDF.
     pub html: bool,
 }
 
 /// Parse CLI arguments.
 pub fn parse(args: &[&str]) -> Parsed {
-    let mut opts = Options {
-        processor: "pro".to_string(),
-        language: "\u{0440}\u{0443}\u{0441}\u{0441}\u{043a}\u{0438}\u{0439}".to_string(),
-        provider: "parallel".to_string(),
-        html: false,
-    };
+    let mut processor = "pro".to_string();
+    let mut language = "\u{0440}\u{0443}\u{0441}\u{0441}\u{043a}\u{0438}\u{0439}".to_string();
+    let mut provider_text = "parallel".to_string();
+    let mut html = false;
     let mut positional = Vec::new();
     let mut idx = 0;
     while idx < args.len() {
         match args[idx] {
             "--processor" if idx + 1 < args.len() => {
                 idx += 1;
-                opts.processor = args[idx].to_string();
+                processor = args[idx].to_string();
             }
             "--language" if idx + 1 < args.len() => {
                 idx += 1;
-                opts.language = args[idx].to_string();
+                language = args[idx].to_string();
             }
             "--provider" if idx + 1 < args.len() => {
                 idx += 1;
-                opts.provider = args[idx].to_string();
+                provider_text = args[idx].to_string();
             }
             "--html" => {
-                opts.html = true;
+                html = true;
             }
             other => {
                 positional.push(other.to_string());
@@ -63,6 +63,15 @@ pub fn parse(args: &[&str]) -> Parsed {
         }
         idx += 1;
     }
+    let provider = provider_text
+        .parse::<Provider>()
+        .unwrap_or_else(|e| panic!("{}", e));
+    let opts = Options {
+        processor,
+        language,
+        provider,
+        html,
+    };
     let cmd = positional.first().cloned().unwrap_or_default();
     let tail: Vec<String> = positional.into_iter().skip(1).collect();
     Parsed { cmd, tail, opts }
@@ -163,9 +172,9 @@ pub trait Applied {
     /// Create session.
     fn create(&self, topic: &str) -> String;
     /// Create session and run research.
-    fn run(&self, topic: &str, query: &str, processor: &str, language: &str, provider: &str);
+    fn run(&self, topic: &str, query: &str, processor: &str, language: &str, provider: &Provider);
     /// Run research for existing session.
-    fn research(&self, id: &str, query: &str, processor: &str, language: &str, provider: &str);
+    fn research(&self, id: &str, query: &str, processor: &str, language: &str, provider: &Provider);
 }
 
 impl Applied for App {
@@ -185,7 +194,7 @@ impl Applied for App {
         seed::seed(&self.data, topic, "", "", "", "")
     }
 
-    fn run(&self, topic: &str, query: &str, processor: &str, language: &str, provider: &str) {
+    fn run(&self, topic: &str, query: &str, processor: &str, language: &str, provider: &Provider) {
         match launch::launch(
             &self.root, &self.data, &self.out, topic, query, processor, language, provider,
             &self.conf,
@@ -195,7 +204,14 @@ impl Applied for App {
         }
     }
 
-    fn research(&self, id: &str, query: &str, processor: &str, language: &str, provider: &str) {
+    fn research(
+        &self,
+        id: &str,
+        query: &str,
+        processor: &str,
+        language: &str,
+        provider: &Provider,
+    ) {
         let repo = research_storage::repository::repo(&self.data);
         let list = research_storage::repository::Loadable::load(&repo);
         let pick = list
@@ -318,23 +334,21 @@ mod tests {
         let mut rng = ids::ids(25002);
         let topic = ids::cyrillic(&mut rng, 6);
         let query = ids::cyrillic(&mut rng, 7);
-        let processor = ids::cyrillic(&mut rng, 5);
         let language = ids::cyrillic(&mut rng, 4);
-        let provider = ids::cyrillic(&mut rng, 6);
         let data = parse(&[
             "run",
             &topic,
             &query,
             "--processor",
-            &processor,
+            "ultra",
             "--language",
             &language,
             "--provider",
-            &provider,
+            "valyu",
         ]);
-        let result = data.opts.processor == processor
+        let result = data.opts.processor == "ultra"
             && data.opts.language == language
-            && data.opts.provider == provider
+            && data.opts.provider == Provider::Valyu
             && !data.opts.html;
         assert!(result, "Options were not parsed");
     }
@@ -344,7 +358,6 @@ mod tests {
         let mut rng = ids::ids(25003);
         let topic = ids::cyrillic(&mut rng, 6);
         let query = ids::greek(&mut rng, 7);
-        let processor = ids::cyrillic(&mut rng, 4);
         let language = ids::greek(&mut rng, 4);
         let text = ids::cyrillic(&mut rng, 6);
         let log = Arc::new(Mutex::new(Vec::new()));
@@ -352,7 +365,7 @@ mod tests {
         let root = dir.path();
         let app = App::with_config(root, conf(log.clone(), &text, serde_json::json!({})));
         std::fs::create_dir_all(root.join("output")).unwrap();
-        app.run(&topic, &query, &processor, &language, "parallel");
+        app.run(&topic, &query, "pro", &language, &Provider::Parallel);
         let repo = repository::repo(&root.join("output"));
         let list = repo.load();
         let pick = list.first().unwrap();
@@ -360,28 +373,7 @@ mod tests {
     }
 
     #[test]
-    fn the_application_run_executes_all_providers() {
-        let mut rng = ids::ids(25004);
-        let topic = ids::cyrillic(&mut rng, 6);
-        let query = ids::greek(&mut rng, 7);
-        let processor = ids::cyrillic(&mut rng, 4);
-        let language = ids::greek(&mut rng, 4);
-        let text = ids::cyrillic(&mut rng, 6);
-        let log = Arc::new(Mutex::new(Vec::new()));
-        let dir = tempfile::tempdir().unwrap();
-        let root = dir.path();
-        std::fs::create_dir_all(root.join("output")).unwrap();
-        let app = App::with_config(root, conf(log.clone(), &text, serde_json::json!({})));
-        app.run(&topic, &query, &processor, &language, "all");
-        let tracked = log.lock().unwrap();
-        let total = tracked.len();
-        let uniques: std::collections::HashSet<&String> = tracked.iter().collect();
-        let result = total == 2 && uniques.len() == 2;
-        assert!(result, "Run did not execute two providers for all");
-    }
-
-    #[test]
-    #[should_panic(expected = "lite is not supported")]
+    #[should_panic(expected = "is not a valid valyu processor")]
     fn the_application_run_rejects_valyu_lite_processor() {
         let mut rng = ids::ids(25006);
         let topic = ids::cyrillic(&mut rng, 6);
@@ -393,7 +385,13 @@ mod tests {
         let root = dir.path();
         std::fs::create_dir_all(root.join("output")).unwrap();
         let app = App::with_config(root, conf(log, &text, serde_json::json!({})));
-        app.run(&topic, &query, "lite", &language, "valyu");
+        app.run(&topic, &query, "lite", &language, &Provider::Valyu);
+    }
+
+    #[test]
+    #[should_panic(expected = "is not a valid provider")]
+    fn the_application_rejects_all_provider() {
+        let _ = parse(&["run", "topic", "query", "--provider", "all"]);
     }
 
     #[test]
@@ -401,9 +399,7 @@ mod tests {
         let mut rng = ids::ids(25005);
         let topic = ids::cyrillic(&mut rng, 6);
         let query = ids::greek(&mut rng, 7);
-        let processor = ids::armenian(&mut rng, 5);
         let language = ids::hiragana(&mut rng, 4);
-        let provider = "parallel";
         let run = ids::arabic(&mut rng, 8);
         let text = ids::cyrillic(&mut rng, 12);
         let stamp = task::format(&chrono::Local::now().naive_local());
@@ -411,9 +407,9 @@ mod tests {
         let entry = serde_json::json!({
             "run_id": run,
             "query": query,
-            "processor": processor,
+            "processor": "pro",
             "language": language,
-            "provider": provider,
+            "provider": "parallel",
         });
         let sess = session::session(&serde_json::json!({
             "id": ident,
@@ -431,10 +427,10 @@ mod tests {
         let log = Arc::new(Mutex::new(Vec::new()));
         let app = App::with_config(root, conf(log, &text, serde_json::json!({})));
         let token = &ident[..8];
-        app.research(token, &query, &processor, &language, provider);
+        app.research(token, &query, "pro", &language, &Provider::Parallel);
         let org = organizer::organizer(&out);
         let name = org.name(sess.created(), sess.topic(), sess.id());
-        let cover = org.cover(&name, provider);
+        let cover = org.cover(&name, "parallel");
         assert!(
             !cover.exists(),
             "Cover image was generated despite missing key"
@@ -446,9 +442,7 @@ mod tests {
         let mut rng = ids::ids(25007);
         let topic = ids::cyrillic(&mut rng, 6);
         let query = ids::greek(&mut rng, 7);
-        let processor = ids::armenian(&mut rng, 5);
         let language = ids::hiragana(&mut rng, 4);
-        let provider = ids::cyrillic(&mut rng, 5);
         let run = ids::arabic(&mut rng, 8);
         let text = ids::cyrillic(&mut rng, 12);
         let stamp = task::format(&chrono::Local::now().naive_local());
@@ -459,9 +453,9 @@ mod tests {
         let entry = serde_json::json!({
             "run_id": run,
             "query": query,
-            "processor": processor,
+            "processor": "ultra",
             "language": language,
-            "provider": provider,
+            "provider": "parallel",
         });
         let sess = session::session(&serde_json::json!({
             "id": ident,
@@ -479,17 +473,11 @@ mod tests {
         let log = Arc::new(Mutex::new(Vec::new()));
         let app = App::with_config(root, conf(log, &text, raw.clone()));
         let token = &ident[..8];
-        app.research(token, &query, &processor, &language, &provider);
+        app.research(token, &query, "ultra", &language, &Provider::Parallel);
         let org = organizer::organizer(&out);
         let name = org.name(sess.created(), sess.topic(), sess.id());
-        let tag = organizer::slug(&provider);
-        let tag = if tag.is_empty() {
-            "provider".to_string()
-        } else {
-            tag
-        };
-        let folder = org.folder(&name, &provider);
-        let path = folder.join(format!("response-{}.json", tag));
+        let folder = org.folder(&name, "parallel");
+        let path = folder.join("response-parallel.json");
         let content = std::fs::read_to_string(&path).unwrap();
         let data: serde_json::Value = serde_json::from_str(&content).unwrap();
         assert_eq!(raw, data, "Raw response did not match stored response");
@@ -500,9 +488,7 @@ mod tests {
         let mut rng = ids::ids(25008);
         let topic = ids::cyrillic(&mut rng, 6);
         let query = ids::greek(&mut rng, 7);
-        let processor = ids::armenian(&mut rng, 5);
         let language = ids::hiragana(&mut rng, 4);
-        let provider = ids::cyrillic(&mut rng, 5);
         let run = ids::arabic(&mut rng, 8);
         let text = ids::cyrillic(&mut rng, 12);
         let stamp = task::format(&chrono::Local::now().naive_local());
@@ -510,9 +496,9 @@ mod tests {
         let entry = serde_json::json!({
             "run_id": run,
             "query": query,
-            "processor": processor,
+            "processor": "fast",
             "language": language,
-            "provider": provider,
+            "provider": "valyu",
         });
         let sess = session::session(&serde_json::json!({
             "id": ident,
@@ -562,10 +548,10 @@ mod tests {
             },
         );
         let token = &ident[..8];
-        app.research(token, &query, &processor, &language, &provider);
+        app.research(token, &query, "fast", &language, &Provider::Valyu);
         let org = organizer::organizer(&out);
         let name = org.name(sess.created(), sess.topic(), sess.id());
-        let path = org.report(&name, &provider);
+        let path = org.report(&name, "valyu");
         assert!(
             path.exists(),
             "Report was not generated after cover failure"
@@ -581,9 +567,7 @@ mod tests {
             ids::cyrillic(&mut rng, 5),
             ids::greek(&mut rng, 7)
         );
-        let processor = "pro";
         let language = ids::cyrillic(&mut rng, 4);
-        let provider = "parallel";
         let _run = ids::arabic(&mut rng, 8);
         let text = ids::cyrillic(&mut rng, 12);
         let stamp = task::format(&chrono::Local::now().naive_local());
@@ -603,10 +587,10 @@ mod tests {
         let log = Arc::new(Mutex::new(Vec::new()));
         let app = App::with_config(root, conf(log, &text, serde_json::json!({})));
         let token = &ident[..8];
-        app.research(token, &query, processor, &language, provider);
+        app.research(token, &query, "pro", &language, &Provider::Parallel);
         let org = organizer::organizer(&out);
         let name = org.name(sess.created(), sess.topic(), sess.id());
-        let folder = org.folder(&name, provider);
+        let folder = org.folder(&name, "parallel");
         let path = folder.join("session.json");
         let content = std::fs::read_to_string(&path).unwrap();
         let data: serde_json::Value = serde_json::from_str(&content).unwrap();
@@ -624,9 +608,7 @@ mod tests {
         let text_val = ids::greek(&mut rng, 6);
         let leaf = ids::hiragana(&mut rng, 6);
         let node = ids::armenian(&mut rng, 6);
-        let processor = "pro";
         let language = ids::cyrillic(&mut rng, 4);
-        let provider = "parallel";
         let run = ids::arabic(&mut rng, 8);
         let output = ids::cyrillic(&mut rng, 6);
         let stamp = task::format(&chrono::Local::now().naive_local());
@@ -645,9 +627,9 @@ mod tests {
         let entry = serde_json::json!({
             "run_id": run,
             "brief": brief,
-            "processor": processor,
+            "processor": "pro",
             "language": language,
-            "provider": provider,
+            "provider": "parallel",
         });
         let sess = session::session(&serde_json::json!({
             "id": ident,
@@ -667,10 +649,10 @@ mod tests {
         let query = pend.query();
         let app = App::with_config(root, conf(log, &output, serde_json::json!({})));
         let token = &ident[..8];
-        app.research(token, &query, processor, &language, provider);
+        app.research(token, &query, "pro", &language, &Provider::Parallel);
         let org = organizer::organizer(&out);
         let name = org.name(sess.created(), sess.topic(), sess.id());
-        let folder = org.folder(&name, provider);
+        let folder = org.folder(&name, "parallel");
         let path = folder.join("session.json");
         let content = std::fs::read_to_string(&path).unwrap();
         let data: serde_json::Value = serde_json::from_str(&content).unwrap();

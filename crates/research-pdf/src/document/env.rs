@@ -1,6 +1,7 @@
 use std::path::Path;
 use std::process::Command;
 
+use research_domain::provider::Labeled;
 use research_domain::task::{ResearchRun, Tasked};
 
 /// Return environment value by key.
@@ -61,18 +62,11 @@ pub fn author() -> String {
 pub fn service(tasks: &[ResearchRun]) -> String {
     tasks
         .last()
-        .map(|t| t.provider().to_string())
+        .map(|t| t.provider().label().to_string())
         .unwrap_or_else(|| "parallel.ai".to_string())
 }
 
 /// Return provider slug from task service.
 pub fn provider(task: &ResearchRun) -> String {
-    let name = task.provider();
-    if name == "x.ai" {
-        "xai".to_string()
-    } else if name.ends_with(".ai") {
-        name.split('.').next().unwrap_or(name).to_string()
-    } else {
-        name.to_string()
-    }
+    task.provider().to_string()
 }

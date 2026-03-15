@@ -2,6 +2,8 @@ use chrono::NaiveDateTime;
 use std::collections::HashMap;
 
 use crate::brief::{self, Brief, Question};
+use crate::processor::{self, Processor};
+use crate::provider::{Labeled, Provider};
 use crate::result::{self, Report};
 
 /// Object representing a research task.
@@ -19,7 +21,7 @@ pub trait Tasked {
     /// Return task language.
     fn language(&self) -> &str;
     /// Return task provider.
-    fn provider(&self) -> &str;
+    fn provider(&self) -> &Provider;
     /// Return creation time.
     fn created(&self) -> &NaiveDateTime;
     /// Return completion time.
@@ -48,8 +50,8 @@ pub struct ResearchRun {
     code: String,
     content: Brief,
     status: String,
-    service: String,
-    processor: String,
+    service: Provider,
+    processor: Processor,
     stamp: NaiveDateTime,
     done: Option<NaiveDateTime>,
     value: Report,
@@ -80,7 +82,7 @@ impl Tasked for ResearchRun {
         &self.content.language
     }
 
-    fn provider(&self) -> &str {
+    fn provider(&self) -> &Provider {
         &self.service
     }
 
@@ -97,8 +99,8 @@ impl Tasked for ResearchRun {
             code: self.code.clone(),
             content: self.content.clone(),
             status: "completed".to_string(),
-            service: self.service.clone(),
-            processor: self.processor.clone(),
+            service: self.service,
+            processor: self.processor,
             stamp: self.stamp,
             done: Some(chrono::Local::now().naive_local()),
             value,
@@ -121,14 +123,12 @@ impl Tasked for ResearchRun {
         );
         map.insert(
             "service".to_string(),
-            serde_json::Value::String(self.service.clone()),
+            serde_json::Value::String(self.service.label().to_string()),
         );
-        if !self.processor.is_empty() {
-            map.insert(
-                "processor".to_string(),
-                serde_json::Value::String(self.processor.clone()),
-            );
-        }
+        map.insert(
+            "processor".to_string(),
+            serde_json::Value::String(self.processor.to_string()),
+        );
         map.insert("brief".to_string(), brief::data(&self.content));
         map.insert(
             "created".to_string(),
@@ -150,11 +150,12 @@ pub fn task(item: &serde_json::Value) -> ResearchRun {
         .get("language")
         .and_then(|v| v.as_str())
         .unwrap_or("\u{0440}\u{0443}\u{0441}\u{0441}\u{043a}\u{0438}\u{0439}");
-    let name = item
+    let service = item
         .get("service")
         .and_then(|v| v.as_str())
-        .unwrap_or("parallel.ai");
-    let name = normalize_provider(name);
+        .unwrap_or("parallel.ai")
+        .parse::<Provider>()
+        .unwrap_or(Provider::Parallel);
     let time = parse(
         item.get("created")
             .and_then(|v| v.as_str())
@@ -201,7 +202,12 @@ pub fn task(item: &serde_json::Value) -> ResearchRun {
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
         .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
-    let processor = item.get("processor").and_then(|v| v.as_str()).unwrap_or("");
+    let proc_text = item
+        .get("processor")
+        .and_then(|v| v.as_str())
+        .unwrap_or("pro");
+    let processor = processor::resolve(proc_text, &service)
+        .unwrap_or(Processor::Parallel(crate::processor::ParallelMode::Pro));
     ResearchRun {
         code,
         content,
@@ -210,21 +216,11 @@ pub fn task(item: &serde_json::Value) -> ResearchRun {
             .and_then(|v| v.as_str())
             .unwrap_or("")
             .to_string(),
-        service: name.to_string(),
-        processor: processor.to_string(),
+        service,
+        processor,
         stamp: time,
         done,
         value,
-    }
-}
-
-/// Normalize provider name (fix xai.ai -> x.ai).
-fn normalize_provider(name: &str) -> String {
-    let parts: Vec<&str> = name.split('.').collect();
-    if name.ends_with(".ai") && parts.first() == Some(&"xai") && name != "x.ai" {
-        "x.ai".to_string()
-    } else {
-        name.to_string()
     }
 }
 

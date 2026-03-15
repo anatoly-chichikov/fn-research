@@ -1,5 +1,7 @@
 pub mod brief;
 pub mod pending;
+pub mod processor;
+pub mod provider;
 pub mod result;
 pub mod session;
 pub mod task;

@@ -2,6 +2,8 @@ use chrono::NaiveDateTime;
 use std::collections::HashMap;
 
 use crate::pending::{self, PendingRun, Pendinged};
+use crate::processor::{self, Processor};
+use crate::provider::Provider;
 use crate::task::{self, ResearchRun, Tasked};
 
 /// Object representing research session.
@@ -18,12 +20,12 @@ pub trait Sessioned {
     fn pending(&self) -> Option<&PendingRun>;
     /// Return research query.
     fn query(&self) -> &str;
-    /// Return processor name.
-    fn processor(&self) -> &str;
+    /// Return processor.
+    fn processor(&self) -> &Processor;
     /// Return research language.
     fn language(&self) -> &str;
-    /// Return provider name.
-    fn provider(&self) -> &str;
+    /// Return provider.
+    fn provider(&self) -> &Provider;
     /// Return new session with appended task.
     fn extend(&self, value: ResearchRun) -> ResearchSession;
     /// Return session with pending run.
@@ -45,9 +47,9 @@ pub struct ResearchSession {
     stamp: NaiveDateTime,
     hold: Option<PendingRun>,
     text: String,
-    proc: String,
+    proc: Processor,
     lang: String,
-    prov: String,
+    prov: Provider,
 }
 
 impl Sessioned for ResearchSession {
@@ -75,7 +77,7 @@ impl Sessioned for ResearchSession {
         &self.text
     }
 
-    fn processor(&self) -> &str {
+    fn processor(&self) -> &Processor {
         &self.proc
     }
 
@@ -83,7 +85,7 @@ impl Sessioned for ResearchSession {
         &self.lang
     }
 
-    fn provider(&self) -> &str {
+    fn provider(&self) -> &Provider {
         &self.prov
     }
 
@@ -97,9 +99,9 @@ impl Sessioned for ResearchSession {
             stamp: self.stamp,
             hold: None,
             text: self.text.clone(),
-            proc: self.proc.clone(),
+            proc: self.proc,
             lang: self.lang.clone(),
-            prov: self.prov.clone(),
+            prov: self.prov,
         }
     }
 
@@ -111,9 +113,9 @@ impl Sessioned for ResearchSession {
             stamp: self.stamp,
             hold: Some(value),
             text: self.text.clone(),
-            proc: self.proc.clone(),
+            proc: self.proc,
             lang: self.lang.clone(),
-            prov: self.prov.clone(),
+            prov: self.prov,
         }
     }
 
@@ -125,13 +127,21 @@ impl Sessioned for ResearchSession {
             stamp: self.stamp,
             hold: None,
             text: self.text.clone(),
-            proc: self.proc.clone(),
+            proc: self.proc,
             lang: self.lang.clone(),
-            prov: self.prov.clone(),
+            prov: self.prov,
         }
     }
 
     fn reconfigure(&self, opts: &HashMap<String, String>) -> ResearchSession {
+        let prov = opts
+            .get("provider")
+            .and_then(|v| v.parse::<Provider>().ok())
+            .unwrap_or(self.prov);
+        let proc = opts
+            .get("processor")
+            .and_then(|v| processor::resolve(v, &prov).ok())
+            .unwrap_or(self.proc);
         ResearchSession {
             code: self.code.clone(),
             name: self.name.clone(),
@@ -142,18 +152,12 @@ impl Sessioned for ResearchSession {
                 .get("query")
                 .cloned()
                 .unwrap_or_else(|| self.text.clone()),
-            proc: opts
-                .get("processor")
-                .cloned()
-                .unwrap_or_else(|| self.proc.clone()),
+            proc,
             lang: opts
                 .get("language")
                 .cloned()
                 .unwrap_or_else(|| self.lang.clone()),
-            prov: opts
-                .get("provider")
-                .cloned()
-                .unwrap_or_else(|| self.prov.clone()),
+            prov,
         }
     }
 
@@ -183,24 +187,20 @@ impl Sessioned for ResearchSession {
                 serde_json::Value::String(self.text.clone()),
             );
         }
-        if !self.proc.is_empty() {
-            map.insert(
-                "processor".to_string(),
-                serde_json::Value::String(self.proc.clone()),
-            );
-        }
+        map.insert(
+            "processor".to_string(),
+            serde_json::Value::String(self.proc.to_string()),
+        );
         if !self.lang.is_empty() {
             map.insert(
                 "language".to_string(),
                 serde_json::Value::String(self.lang.clone()),
             );
         }
-        if !self.prov.is_empty() {
-            map.insert(
-                "provider".to_string(),
-                serde_json::Value::String(self.prov.clone()),
-            );
-        }
+        map.insert(
+            "provider".to_string(),
+            serde_json::Value::String(self.prov.to_string()),
+        );
         if let Some(ref hold) = self.hold {
             map.insert(
                 "pending".to_string(),
@@ -232,6 +232,17 @@ pub fn session(item: &serde_json::Value) -> ResearchSession {
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
         .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+    let prov = item
+        .get("provider")
+        .and_then(|v| v.as_str())
+        .and_then(|s| s.parse::<Provider>().ok())
+        .unwrap_or(Provider::Parallel);
+    let proc_text = item
+        .get("processor")
+        .and_then(|v| v.as_str())
+        .unwrap_or("pro");
+    let proc = processor::resolve(proc_text, &prov)
+        .unwrap_or(Processor::Parallel(crate::processor::ParallelMode::Pro));
     ResearchSession {
         code,
         name: item
@@ -247,21 +258,13 @@ pub fn session(item: &serde_json::Value) -> ResearchSession {
             .and_then(|v| v.as_str())
             .unwrap_or("")
             .to_string(),
-        proc: item
-            .get("processor")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string(),
+        proc,
         lang: item
             .get("language")
             .and_then(|v| v.as_str())
             .unwrap_or("")
             .to_string(),
-        prov: item
-            .get("provider")
-            .and_then(|v| v.as_str())
-            .unwrap_or("")
-            .to_string(),
+        prov,
     }
 }
 

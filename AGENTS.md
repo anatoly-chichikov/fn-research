@@ -31,7 +31,7 @@ New research. Dialog first, then launch.
 ### Inline parameters
 
 parse rs [provider] [processor] <topic>
-  - first token after `rs`: check if known provider (parallel, valyu, xai, all)
+  - first token after `rs`: check if known provider (parallel, valyu, xai)
   - if provider matched, next token: check if valid processor for that provider
   - remaining tokens = topic
   - if first token is NOT a provider — entire string is topic, ask provider/processor interactively
@@ -41,7 +41,6 @@ enum providers
   - parallel: pro, pro-fast, ultra, ultra-fast, ultra2x, ultra2x-fast, ultra4x, ultra4x-fast, ultra8x, ultra8x-fast
   - valyu: fast, standard, heavy
   - xai: social, full
-  - all: inherits parallel processors (runs parallel then valyu)
 
 ### Interactive questions
 
@@ -59,7 +58,6 @@ ask provider (skip if inline) Which data provider?
   - parallel (cheaper and faster)
   - valyu (more thorough, premium result)
   - xai (social sources)
-  - all (run parallel then valyu)
 
 ask processor (skip if inline) What compute level?
   - parallel: pro, ultra, ultra8x
@@ -220,14 +218,6 @@ Research:
 →[sub-topic text]
 ```
 
-#### Dual runs
-
-when user asks for two runs at once
-  - ask same questions twice, explicitly for run A then run B (no multi-select)
-  - collect params for run A and run B (topic, language, provider, processor)
-  - each run gets own structured brief generation (Phase 1 + Phase 2)
-  - start two docker containers (different names) and report both
-
 ### Title
 
 rule Title is most important — appears in PDF, folder name, session list
@@ -265,8 +255,6 @@ run docker run -d --name "research-{timestamp}-{slug}" \
     -v "$(pwd)/output:/app/output" \
     -e PARALLEL_API_KEY -e VALYU_API_KEY -e GEMINI_API_KEY -e REPORT_FOR -e XAI_API_KEY \
     research run "{topic}" $'Язык ответа: {language}.\n\n{brief}' --processor "{processor}" --language "{language}" --provider "{provider}"
-
-when two runs → run command twice with different {timestamp}-{slug} values
 
 notify container_name
 notify estimated_time
@@ -380,6 +368,7 @@ Tip: add `-fast` for speed (pro-fast, ultra-fast)
 | `fast` | Quickest, lighter research |
 | `standard` | Balanced depth and speed |
 | `heavy` | Deeper, more thorough |
+| `max` | Exhaustive multi-source analysis |
 
 ---
 

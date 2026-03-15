@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
 use crate::brief::{self, Brief, Question};
+use crate::processor::{self, Processor};
+use crate::provider::Provider;
 
 /// Object with pending run details.
 pub trait Pendinged {
@@ -10,12 +12,12 @@ pub trait Pendinged {
     fn brief(&self) -> &Brief;
     /// Return research query.
     fn query(&self) -> String;
-    /// Return processor name.
-    fn processor(&self) -> &str;
+    /// Return processor.
+    fn processor(&self) -> &Processor;
     /// Return research language.
     fn language(&self) -> &str;
-    /// Return provider name.
-    fn provider(&self) -> &str;
+    /// Return provider.
+    fn provider(&self) -> &Provider;
     /// Return map representation.
     fn data(&self) -> HashMap<String, serde_json::Value>;
 }
@@ -25,8 +27,8 @@ pub trait Pendinged {
 pub struct PendingRun {
     code: String,
     content: Brief,
-    proc: String,
-    prov: String,
+    proc: Processor,
+    prov: Provider,
 }
 
 impl Pendinged for PendingRun {
@@ -42,7 +44,7 @@ impl Pendinged for PendingRun {
         brief::render(&self.content)
     }
 
-    fn processor(&self) -> &str {
+    fn processor(&self) -> &Processor {
         &self.proc
     }
 
@@ -50,7 +52,7 @@ impl Pendinged for PendingRun {
         &self.content.language
     }
 
-    fn provider(&self) -> &str {
+    fn provider(&self) -> &Provider {
         &self.prov
     }
 
@@ -62,7 +64,7 @@ impl Pendinged for PendingRun {
         );
         map.insert(
             "processor".to_string(),
-            serde_json::Value::String(self.proc.clone()),
+            serde_json::Value::String(self.proc.to_string()),
         );
         map.insert(
             "language".to_string(),
@@ -70,7 +72,7 @@ impl Pendinged for PendingRun {
         );
         map.insert(
             "provider".to_string(),
-            serde_json::Value::String(self.prov.clone()),
+            serde_json::Value::String(self.prov.to_string()),
         );
         map.insert("brief".to_string(), brief::data(&self.content));
         map
@@ -103,16 +105,19 @@ pub fn pending(item: &serde_json::Value) -> PendingRun {
                 .map(|arr| arr.iter().map(json_to_question).collect::<Vec<Question>>())
         });
     let run_id = item.get("run_id").and_then(|v| v.as_str()).unwrap_or("");
-    let processor = item.get("processor").and_then(|v| v.as_str()).unwrap_or("");
+    let proc_text = item.get("processor").and_then(|v| v.as_str()).unwrap_or("");
     let language = entry
         .and_then(|e| e.get("language"))
         .and_then(|v| v.as_str())
         .or_else(|| item.get("language").and_then(|v| v.as_str()))
         .unwrap_or("");
-    let provider = item
+    let prov = item
         .get("provider")
         .and_then(|v| v.as_str())
-        .unwrap_or("parallel");
+        .and_then(|s| s.parse::<Provider>().ok())
+        .unwrap_or(Provider::Parallel);
+    let proc = processor::resolve(proc_text, &prov)
+        .unwrap_or(Processor::Parallel(crate::processor::ParallelMode::Pro));
     let content = brief::parse(
         query_text,
         language,
@@ -122,8 +127,8 @@ pub fn pending(item: &serde_json::Value) -> PendingRun {
     PendingRun {
         code: run_id.to_string(),
         content,
-        proc: processor.to_string(),
-        prov: provider.to_string(),
+        proc,
+        prov,
     }
 }
 
