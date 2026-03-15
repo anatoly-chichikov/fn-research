@@ -267,6 +267,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use image::GenericImageView;
     use research_api::traits::Researchable;
     use research_domain::ids;
     use research_domain::pending::Pendinged;
@@ -651,5 +652,169 @@ mod tests {
         let first = &brief.questions[0];
         let nested = !first.details.is_empty();
         assert!(nested, "Nested brief questions were not preserved");
+    }
+
+    /// Render PDF pages to PNG screenshots using pdftoppm.
+    fn screens(
+        pdf: &std::path::Path,
+        folder: &std::path::Path,
+        dpi: u32,
+    ) -> Vec<image::DynamicImage> {
+        let prefix = folder.join("page");
+        let output = std::process::Command::new("pdftoppm")
+            .args(["-png", "-r", &dpi.to_string()])
+            .arg(pdf)
+            .arg(&prefix)
+            .output()
+            .expect("pdftoppm must be installed");
+        assert!(
+            output.status.success(),
+            "pdftoppm failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let mut files: Vec<_> = std::fs::read_dir(folder)
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .map(|e| e.path())
+            .filter(|p| p.extension().map(|e| e == "png").unwrap_or(false))
+            .collect();
+        files.sort();
+        files.iter().map(|p| image::open(p).unwrap()).collect()
+    }
+
+    /// Return first mismatching page (1-indexed), or 0 if all match.
+    fn mismatch(left: &[image::DynamicImage], right: &[image::DynamicImage]) -> usize {
+        if left.len() != right.len() {
+            return left.len().min(right.len()) + 1;
+        }
+        for (idx, (one, two)) in left.iter().zip(right.iter()).enumerate() {
+            if one.dimensions() != two.dimensions() || one.as_bytes() != two.as_bytes() {
+                return idx + 1;
+            }
+        }
+        0
+    }
+
+    #[test]
+    #[ignore]
+    fn the_application_generates_pdf_screenshots() {
+        let base = std::path::PathBuf::from("baseline-research");
+        let brief_text = std::fs::read_to_string(base.join("brief-parallel.ron")).unwrap();
+        let brief_obj = research_domain::brief::decode(&brief_text).unwrap();
+        let raw: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(base.join("response-parallel.json")).unwrap(),
+        )
+        .unwrap();
+        let cover_src = base.join("cover-parallel.jpg");
+        let gold = base.join("baseline.pdf");
+        let output_obj = raw.get("output").unwrap();
+        let content = output_obj
+            .get("content")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let basis = output_obj
+            .get("basis")
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
+        let run_info = raw.get("run").unwrap();
+        let run_code = run_info
+            .get("run_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        let normalized = serde_json::json!({
+            "id": run_code,
+            "status": "completed",
+            "output": content,
+            "basis": basis,
+            "raw": raw
+        });
+        let mut rng = ids::ids(25011);
+        let lang = ids::cyrillic(&mut rng, 6);
+        let head = ids::ascii(&mut rng, 6);
+        let ident = ids::uuid(&mut rng);
+        let stamp = task::format(&chrono::Local::now().naive_local());
+        let entry = serde_json::json!({
+            "run_id": run_code,
+            "brief": research_domain::brief::data(&brief_obj),
+            "processor": "pro",
+            "language": lang,
+            "provider": "parallel",
+        });
+        let sess = session::session(&serde_json::json!({
+            "id": ident,
+            "topic": "Clojure production pain points",
+            "tasks": [],
+            "created": stamp,
+            "pending": entry,
+        }));
+        let pend = research_domain::pending::pending(&entry);
+        let query = pend.query();
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let out = root.join("output");
+        std::fs::create_dir_all(&out).unwrap();
+        let store = repository::repo(&out);
+        store.save(&[sess.clone()]);
+        unsafe {
+            std::env::set_var("REPORT_FOR", "Anatoly Chichikov");
+        }
+        let cover_path = cover_src.clone();
+        let norm = normalized.clone();
+        let app = App::with_config(
+            root,
+            Config {
+                env: Box::new(|key| {
+                    if key == "GEMINI_API_KEY" {
+                        "key".to_string()
+                    } else {
+                        String::new()
+                    }
+                }),
+                emit: Box::new(research_pdf::document::env::emit),
+                provider: Box::new(move |name| {
+                    let data = norm.clone();
+                    let tag = name.to_string();
+                    Box::new(FakeProvider {
+                        name: tag.clone(),
+                        text: data["output"].as_str().unwrap_or("").to_string(),
+                        run: data["id"].as_str().unwrap_or("").to_string(),
+                        raw: data["raw"].clone(),
+                        log: Arc::new(Mutex::new(Vec::new())),
+                    })
+                }),
+                cover: Box::new(move |_, target| {
+                    std::fs::copy(&cover_path, target)
+                        .map(|_| ())
+                        .map_err(|e| format!("Copy failed: {}", e))
+                }),
+            },
+        );
+        app.research(&ident[..8], &query, "pro", &lang, &Provider::Parallel);
+        let org = organizer::organizer(&out);
+        let name = org.name(sess.created(), sess.topic(), sess.id());
+        let path = org.report(&name, "parallel");
+        assert!(path.exists(), "Generated PDF was not created");
+        let cache = std::path::PathBuf::from("tmp_cache");
+        let folder = cache.join(format!("pdf-screens-{}", head));
+        let left = folder.join("baseline");
+        let right = folder.join("generated");
+        std::fs::create_dir_all(&left).unwrap();
+        std::fs::create_dir_all(&right).unwrap();
+        let lefts = screens(&gold, &left, 150);
+        let rights = screens(&path, &right, 150);
+        let miss = mismatch(&lefts, &rights);
+        let text = if miss == 0 {
+            String::new()
+        } else {
+            let name = format!("page-{:03}.png", miss);
+            format!(
+                "Page {} did not match baseline baseline={} generated={}",
+                miss,
+                left.join(&name).display(),
+                right.join(&name).display()
+            )
+        };
+        assert_eq!(0, miss, "{}", text);
     }
 }

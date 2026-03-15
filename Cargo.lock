@@ -2268,6 +2268,7 @@ name = "research-cli"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "image",
  "reqwest",
  "research-api",
  "research-domain",
