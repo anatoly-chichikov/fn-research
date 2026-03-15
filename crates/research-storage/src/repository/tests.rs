@@ -3,8 +3,9 @@ use std::fs;
 use research_domain::ids;
 use research_domain::result::{self, Serialized};
 use research_domain::session::{self, Sessioned};
-use research_domain::task::{self, Tasked};
+use research_domain::task;
 
+use super::super::organizer::Organized;
 use super::{repo, Loadable, Mutable, Savable};
 use tempfile::TempDir;
 
@@ -165,8 +166,8 @@ fn the_repository_migrates_legacy_folders() {
     fs::write(&response, "{}").unwrap();
     let r = repo(dir.path());
     r.load();
-    let file = path.join("session.edn");
-    assert!(file.exists(), "Migration did not create session edn");
+    let file = path.join("session.ron");
+    assert!(file.exists(), "Migration did not create session ron");
 }
 
 #[test]
@@ -193,6 +194,64 @@ fn the_repository_builds_tasks_from_responses() {
         2,
         item.tasks().len(),
         "Migration did not build tasks from responses"
+    );
+}
+
+#[test]
+fn the_repository_loads_legacy_json_session() {
+    let mut rng = ids::ids(24017);
+    let dir = TempDir::new().unwrap();
+    let topic = ids::cyrillic(&mut rng, 6);
+    let ident = ids::uuid(&mut rng);
+    let time = ids::time(&mut rng);
+    let entry = session::session(&serde_json::json!({
+        "id": ident,
+        "topic": topic,
+        "tasks": [],
+        "created": time
+    }));
+    let org = super::super::organizer::organizer(dir.path());
+    let name = org.name(entry.created(), entry.topic(), entry.id());
+    let base = dir.path().join(&name);
+    fs::create_dir_all(&base).unwrap();
+    let path = base.join("session.json");
+    let data = entry.data();
+    let text = serde_json::to_string_pretty(&serde_json::to_value(&data).unwrap_or_default())
+        .unwrap_or_default();
+    fs::write(&path, text).unwrap();
+    let item = repo(dir.path());
+    let loaded = item.load();
+    assert_eq!(
+        topic,
+        loaded[0].topic(),
+        "JSON fallback did not load session"
+    );
+}
+
+#[test]
+fn the_repository_saves_session_as_ron() {
+    let mut rng = ids::ids(24019);
+    let dir = TempDir::new().unwrap();
+    let item = repo(dir.path());
+    let topic = ids::cyrillic(&mut rng, 6);
+    let ident = ids::uuid(&mut rng);
+    let time = ids::time(&mut rng);
+    let entry = session::session(&serde_json::json!({
+        "id": ident,
+        "topic": topic,
+        "tasks": [],
+        "created": time
+    }));
+    item.save(&[entry.clone()]);
+    let org = super::super::organizer::organizer(dir.path());
+    let name = org.name(entry.created(), entry.topic(), entry.id());
+    let base = dir.path().join(&name);
+    let ron = base.join("session.ron");
+    assert!(ron.exists(), "Session was not saved as RON");
+    let text = fs::read_to_string(&ron).unwrap();
+    assert!(
+        text.contains("ResearchSession("),
+        "RON file did not contain struct name"
     );
 }
 

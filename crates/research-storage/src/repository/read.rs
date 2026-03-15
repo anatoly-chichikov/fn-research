@@ -25,9 +25,14 @@ pub fn items(root: &Path) -> Vec<ResearchSession> {
             .unwrap_or_default()
             .to_string_lossy()
             .to_string();
-        let edn = path.join("session.edn");
+        let ron = path.join("session.ron");
         let json = path.join("session.json");
-        if json.exists() {
+        let edn = path.join("session.edn");
+        if ron.exists() {
+            if let Some(item) = load_ron(&ron) {
+                list.push(item);
+            }
+        } else if json.exists() {
             if let Some(item) = load_json(&json) {
                 list.push(item);
             }
@@ -69,16 +74,20 @@ pub fn items(root: &Path) -> Vec<ResearchSession> {
                 "created": time
             });
             let item = session::session(&data);
-            let text = serde_json::to_string_pretty(
-                &serde_json::to_value(item.data()).unwrap_or_default(),
-            )
-            .unwrap_or_default();
-            fs::write(&edn, &text).ok();
+            let conf = ron::ser::PrettyConfig::default().struct_names(true);
+            let text = ron::ser::to_string_pretty(&item, conf).unwrap_or_default();
+            fs::write(&ron, &text).ok();
             list.push(item);
         }
     }
     list.sort_by(|a, b| a.created().cmp(b.created()));
     list
+}
+
+/// Load session from RON file.
+fn load_ron(path: &Path) -> Option<ResearchSession> {
+    let text = fs::read_to_string(path).ok()?;
+    ron::from_str(&text).ok()
 }
 
 /// Load session from JSON file.

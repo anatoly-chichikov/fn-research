@@ -271,7 +271,7 @@ mod tests {
     use research_domain::ids;
     use research_domain::pending::Pendinged;
     use research_domain::session::{self, Sessioned};
-    use research_domain::task;
+    use research_domain::task::{self, Tasked};
     use research_storage::organizer::{self, Organized};
     use research_storage::repository::{self, Loadable, Savable};
     use std::sync::{Arc, Mutex};
@@ -588,17 +588,11 @@ mod tests {
         let app = App::with_config(root, conf(log, &text, serde_json::json!({})));
         let token = &ident[..8];
         app.research(token, &query, "pro", &language, &Provider::Parallel);
-        let org = organizer::organizer(&out);
-        let name = org.name(sess.created(), sess.topic(), sess.id());
-        let folder = org.folder(&name, "parallel");
-        let path = folder.join("session.json");
-        let content = std::fs::read_to_string(&path).unwrap();
-        let data: serde_json::Value = serde_json::from_str(&content).unwrap();
-        let item = &data["tasks"][0]["brief"];
-        let seen = item.get("title").is_some()
-            && item.get("questions").is_some()
-            && item.get("text").is_none();
-        assert!(seen, "Brief was not stored in session");
+        let loaded = store.load();
+        let hit = loaded.iter().find(|s| s.id() == ident).unwrap();
+        let run = &hit.tasks()[0];
+        let brief = run.brief();
+        assert!(!brief.title.is_empty(), "Brief was not stored in session");
     }
 
     #[test]
@@ -650,22 +644,12 @@ mod tests {
         let app = App::with_config(root, conf(log, &output, serde_json::json!({})));
         let token = &ident[..8];
         app.research(token, &query, "pro", &language, &Provider::Parallel);
-        let org = organizer::organizer(&out);
-        let name = org.name(sess.created(), sess.topic(), sess.id());
-        let folder = org.folder(&name, "parallel");
-        let path = folder.join("session.json");
-        let content = std::fs::read_to_string(&path).unwrap();
-        let data: serde_json::Value = serde_json::from_str(&content).unwrap();
-        let item = &data["tasks"][0]["brief"];
-        let first = item
-            .get("questions")
-            .and_then(|v| v.as_array())
-            .and_then(|a| a.first());
-        let nested = first
-            .and_then(|n| n.get("details"))
-            .and_then(|v| v.as_array())
-            .map(|a| !a.is_empty())
-            .unwrap_or(false);
+        let loaded = store.load();
+        let hit = loaded.iter().find(|s| s.id() == ident).unwrap();
+        let run = &hit.tasks()[0];
+        let brief = run.brief();
+        let first = &brief.questions[0];
+        let nested = !first.details.is_empty();
         assert!(nested, "Nested brief questions were not preserved");
     }
 }

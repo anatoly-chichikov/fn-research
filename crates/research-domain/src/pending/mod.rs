@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::brief::{self, Brief, Question};
@@ -23,7 +24,7 @@ pub trait Pendinged {
 }
 
 /// Pending run record.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PendingRun {
     code: String,
     content: Brief,

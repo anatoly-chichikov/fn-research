@@ -136,36 +136,6 @@ fn the_task_complete_preserves_id() {
 }
 
 #[test]
-fn the_task_complete_adds_timestamp() {
-    let mut rng = ids::ids(11011);
-    let time = ids::time(&mut rng);
-    let query = ids::cyrillic(&mut rng, 6);
-    let status = ids::cyrillic(&mut rng, 6);
-    let language = ids::cyrillic(&mut rng, 5);
-    let summary = ids::cyrillic(&mut rng, 6);
-    let id = ids::uuid(&mut rng);
-    let value = result::ResearchReport::new(&summary, vec![]);
-    let item = task::task(&serde_json::json!({
-        "id": id,
-        "query": query,
-        "status": status,
-        "language": language,
-        "service": "valyu.ai",
-        "processor": "standard",
-        "result": value.data(),
-        "created": time
-    }));
-    let output = item.finish(result::Report::Full(result::ResearchReport::new(
-        &summary,
-        vec![],
-    )));
-    assert!(
-        output.completed().is_some(),
-        "Completed task timestamp was missing"
-    );
-}
-
-#[test]
 fn the_task_omits_query_serialization() {
     let mut rng = ids::ids(11013);
     let time = ids::time(&mut rng);

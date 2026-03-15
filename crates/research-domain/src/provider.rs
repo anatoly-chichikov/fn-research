@@ -1,8 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
 /// Research data provider.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Provider {
     /// Parallel.ai provider.
     Parallel,
@@ -139,5 +140,22 @@ mod tests {
     #[test]
     fn the_provider_labels_xai_as_x_ai() {
         assert_eq!("x.ai", Provider::Xai.label(), "Provider label was not x.ai");
+    }
+
+    #[test]
+    fn the_provider_roundtrips_through_ron() {
+        let original = Provider::Valyu;
+        let text = ron::to_string(&original).unwrap();
+        let parsed: Provider = ron::from_str(&text).unwrap();
+        assert_eq!(original, parsed, "Provider did not roundtrip through RON");
+    }
+
+    #[test]
+    fn the_provider_serializes_as_variant_name() {
+        let text = ron::to_string(&Provider::Valyu).unwrap();
+        assert_eq!(
+            "Valyu", text,
+            "Provider RON did not serialize as variant name"
+        );
     }
 }

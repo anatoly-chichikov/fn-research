@@ -285,7 +285,7 @@ ask type What should we do?
   2. deep-dive — go deeper into part of the result
 
 when re-brief
-  step 1 Load brief from selected session: prefer output/<session>/brief-*.md, fallback output/<session>/input-*.md
+  step 1 Load brief from selected session: parse output/<session>/session.ron and extract the brief from the session structure
   step 2 Ask user for changes using structured brief format (3 root topics × 3 sub-topics from rs)
   step 3 Show diff preview (original brief vs updated brief) before launch, ask confirmation
   step 4 Run new research with updated brief (provider/processor default to original unless user overrides)

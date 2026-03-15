@@ -487,3 +487,182 @@ fn the_session_parses_legacy_service_in_task() {
         "Legacy parallel.ai service was not parsed"
     );
 }
+
+#[test]
+fn the_session_roundtrips_through_ron() {
+    let mut rng = ids::ids(12041);
+    let time = ids::time(&mut rng);
+    let topic = ids::cyrillic(&mut rng, 6);
+    let query = ids::greek(&mut rng, 7);
+    let id = ids::uuid(&mut rng);
+    let summary = ids::cyrillic(&mut rng, 6);
+    let value = result::ResearchReport::new(&summary, vec![]);
+    let tid = ids::uuid(&mut rng);
+    let item = session::session(&serde_json::json!({
+        "id": id,
+        "topic": topic,
+        "tasks": [{
+            "id": tid,
+            "query": query,
+            "status": "completed",
+            "language": "English",
+            "service": "valyu.ai",
+            "processor": "fast",
+            "result": value.data(),
+            "created": time
+        }],
+        "created": time,
+        "query": query,
+        "processor": "fast",
+        "language": "English",
+        "provider": "valyu"
+    }));
+    let conf = ron::ser::PrettyConfig::default().struct_names(true);
+    let text = ron::ser::to_string_pretty(&item, conf).unwrap();
+    let parsed: session::ResearchSession = ron::from_str(&text).unwrap();
+    assert_eq!(item, parsed, "Session did not roundtrip through RON");
+}
+
+#[test]
+fn the_session_ron_contains_struct_name() {
+    let mut rng = ids::ids(12043);
+    let time = ids::time(&mut rng);
+    let topic = ids::cyrillic(&mut rng, 6);
+    let id = ids::uuid(&mut rng);
+    let item = session::session(&serde_json::json!({
+        "id": id,
+        "topic": topic,
+        "tasks": [],
+        "created": time
+    }));
+    let conf = ron::ser::PrettyConfig::default().struct_names(true);
+    let text = ron::ser::to_string_pretty(&item, conf).unwrap();
+    assert!(
+        text.contains("ResearchSession("),
+        "RON output did not contain struct name"
+    );
+}
+
+#[test]
+fn the_session_ron_contains_typed_provider() {
+    let mut rng = ids::ids(12045);
+    let time = ids::time(&mut rng);
+    let topic = ids::cyrillic(&mut rng, 6);
+    let id = ids::uuid(&mut rng);
+    let item = session::session(&serde_json::json!({
+        "id": id,
+        "topic": topic,
+        "tasks": [],
+        "created": time,
+        "provider": "valyu"
+    }));
+    let conf = ron::ser::PrettyConfig::default().struct_names(true);
+    let text = ron::ser::to_string_pretty(&item, conf).unwrap();
+    assert!(
+        text.contains("Valyu"),
+        "RON output did not contain typed provider variant"
+    );
+}
+
+#[test]
+fn the_session_ron_contains_typed_processor() {
+    let mut rng = ids::ids(12047);
+    let time = ids::time(&mut rng);
+    let topic = ids::cyrillic(&mut rng, 6);
+    let id = ids::uuid(&mut rng);
+    let item = session::session(&serde_json::json!({
+        "id": id,
+        "topic": topic,
+        "tasks": [],
+        "created": time,
+        "provider": "valyu",
+        "processor": "fast"
+    }));
+    let conf = ron::ser::PrettyConfig::default().struct_names(true);
+    let text = ron::ser::to_string_pretty(&item, conf).unwrap();
+    assert!(
+        text.contains("Valyu(Fast)"),
+        "RON output did not contain typed processor variant"
+    );
+}
+
+#[test]
+fn the_session_ron_contains_report_variant() {
+    let mut rng = ids::ids(12049);
+    let time = ids::time(&mut rng);
+    let topic = ids::cyrillic(&mut rng, 6);
+    let id = ids::uuid(&mut rng);
+    let summary = ids::cyrillic(&mut rng, 6);
+    let value = result::ResearchReport::new(&summary, vec![]);
+    let tid = ids::uuid(&mut rng);
+    let item = session::session(&serde_json::json!({
+        "id": id,
+        "topic": topic,
+        "tasks": [{
+            "id": tid,
+            "query": topic,
+            "status": "completed",
+            "language": "English",
+            "service": "parallel.ai",
+            "processor": "pro",
+            "result": value.data(),
+            "created": time
+        }],
+        "created": time
+    }));
+    let conf = ron::ser::PrettyConfig::default().struct_names(true);
+    let text = ron::ser::to_string_pretty(&item, conf).unwrap();
+    assert!(
+        text.contains("Full(ResearchReport("),
+        "RON output did not contain typed report variant"
+    );
+}
+
+#[test]
+fn the_session_ron_contains_none_for_missing_pending() {
+    let mut rng = ids::ids(12051);
+    let time = ids::time(&mut rng);
+    let topic = ids::cyrillic(&mut rng, 6);
+    let id = ids::uuid(&mut rng);
+    let item = session::session(&serde_json::json!({
+        "id": id,
+        "topic": topic,
+        "tasks": [],
+        "created": time
+    }));
+    let conf = ron::ser::PrettyConfig::default().struct_names(true);
+    let text = ron::ser::to_string_pretty(&item, conf).unwrap();
+    assert!(
+        text.contains("hold: None"),
+        "RON output did not contain None for missing pending"
+    );
+}
+
+#[test]
+fn the_session_ron_contains_some_for_pending() {
+    let mut rng = ids::ids(12053);
+    let time = ids::time(&mut rng);
+    let run = ids::cyrillic(&mut rng, 6);
+    let query = ids::hiragana(&mut rng, 6);
+    let language = ids::cyrillic(&mut rng, 6);
+    let id = ids::uuid(&mut rng);
+    let item = session::session(&serde_json::json!({
+        "id": id,
+        "topic": ids::cyrillic(&mut rng, 5),
+        "tasks": [],
+        "created": time,
+        "pending": {
+            "run_id": run,
+            "query": query,
+            "processor": "ultra",
+            "language": language,
+            "provider": "parallel"
+        }
+    }));
+    let conf = ron::ser::PrettyConfig::default().struct_names(true);
+    let text = ron::ser::to_string_pretty(&item, conf).unwrap();
+    assert!(
+        text.contains("Some(PendingRun("),
+        "RON output did not contain Some(PendingRun(...))"
+    );
+}

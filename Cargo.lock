@@ -2337,6 +2337,7 @@ dependencies = [
  "rand 0.10.0",
  "regex",
  "research-domain",
+ "ron",
  "serde",
  "serde_json",
  "tempfile",

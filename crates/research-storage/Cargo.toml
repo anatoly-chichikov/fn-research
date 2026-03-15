@@ -8,6 +8,7 @@ research-domain = { path = "../research-domain" }
 chrono = { workspace = true }
 edn-rs = "0.17"
 regex = { workspace = true }
+ron = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

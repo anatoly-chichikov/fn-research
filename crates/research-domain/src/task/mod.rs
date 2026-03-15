@@ -1,4 +1,5 @@
 use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::brief::{self, Brief, Question};
@@ -24,8 +25,6 @@ pub trait Tasked {
     fn provider(&self) -> &Provider;
     /// Return creation time.
     fn created(&self) -> &NaiveDateTime;
-    /// Return completion time.
-    fn completed(&self) -> Option<&NaiveDateTime>;
     /// Return task marked as completed.
     fn finish(&self, value: Report) -> ResearchRun;
     /// Return map representation.
@@ -45,7 +44,7 @@ pub fn format(time: &NaiveDateTime) -> String {
 }
 
 /// Research run record.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ResearchRun {
     code: String,
     content: Brief,
@@ -53,7 +52,6 @@ pub struct ResearchRun {
     service: Provider,
     processor: Processor,
     stamp: NaiveDateTime,
-    done: Option<NaiveDateTime>,
     value: Report,
 }
 
@@ -90,10 +88,6 @@ impl Tasked for ResearchRun {
         &self.stamp
     }
 
-    fn completed(&self) -> Option<&NaiveDateTime> {
-        self.done.as_ref()
-    }
-
     fn finish(&self, value: Report) -> ResearchRun {
         ResearchRun {
             code: self.code.clone(),
@@ -102,7 +96,6 @@ impl Tasked for ResearchRun {
             service: self.service,
             processor: self.processor,
             stamp: self.stamp,
-            done: Some(chrono::Local::now().naive_local()),
             value,
         }
     }
@@ -134,12 +127,6 @@ impl Tasked for ResearchRun {
             "created".to_string(),
             serde_json::Value::String(format(&self.stamp)),
         );
-        if let Some(ref done) = self.done {
-            map.insert(
-                "completed".to_string(),
-                serde_json::Value::String(format(done)),
-            );
-        }
         map
     }
 }
@@ -161,7 +148,6 @@ pub fn task(item: &serde_json::Value) -> ResearchRun {
             .and_then(|v| v.as_str())
             .expect("Task missing created field"),
     );
-    let done = item.get("completed").and_then(|v| v.as_str()).map(parse);
     let entry = item.get("brief");
     let query_text = entry
         .and_then(|e| e.get("text"))
@@ -219,7 +205,6 @@ pub fn task(item: &serde_json::Value) -> ResearchRun {
         service,
         processor,
         stamp: time,
-        done,
         value,
     }
 }

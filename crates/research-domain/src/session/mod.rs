@@ -1,4 +1,5 @@
 use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::pending::{self, PendingRun, Pendinged};
@@ -39,7 +40,7 @@ pub trait Sessioned {
 }
 
 /// Research session record.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ResearchSession {
     code: String,
     name: String,

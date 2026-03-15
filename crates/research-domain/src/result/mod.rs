@@ -37,7 +37,7 @@ pub trait Presence {
 }
 
 /// Citation source with title, url and excerpt.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CitationSource {
     text: String,
     location: String,
@@ -116,7 +116,7 @@ pub fn purge(text: &str) -> String {
 }
 
 /// Research report with summary and sources.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ResearchReport {
     text: String,
     items: Vec<CitationSource>,
@@ -174,7 +174,7 @@ impl std::fmt::Display for ResearchReport {
 }
 
 /// Empty report placeholder.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct EmptyReport {
     text: String,
     items: Vec<CitationSource>,
@@ -218,7 +218,7 @@ impl Presence for EmptyReport {
 }
 
 /// Dynamic report type that can be either real or empty.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Report {
     /// Full research report.
     Full(ResearchReport),

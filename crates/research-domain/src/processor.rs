@@ -1,10 +1,11 @@
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
 use crate::provider::Provider;
 
 /// Parallel.ai processing mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ParallelMode {
     /// Standard research.
     Pro,
@@ -29,7 +30,7 @@ pub enum ParallelMode {
 }
 
 /// Valyu.ai processing mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ValyuMode {
     /// Quick lightweight research.
     Fast,
@@ -42,7 +43,7 @@ pub enum ValyuMode {
 }
 
 /// X.ai processing mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum XaiMode {
     /// Social sources only.
     Social,
@@ -51,7 +52,7 @@ pub enum XaiMode {
 }
 
 /// Research processing mode bound to a provider.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Processor {
     /// Parallel.ai processor.
     Parallel(ParallelMode),
@@ -295,5 +296,22 @@ mod tests {
     fn the_resolve_rejects_lite_for_valyu() {
         let result = resolve("lite", &Provider::Valyu);
         assert!(result.is_err(), "Resolve accepted lite for valyu");
+    }
+
+    #[test]
+    fn the_processor_roundtrips_through_ron() {
+        let original = Processor::Valyu(ValyuMode::Fast);
+        let text = ron::to_string(&original).unwrap();
+        let parsed: Processor = ron::from_str(&text).unwrap();
+        assert_eq!(original, parsed, "Processor did not roundtrip through RON");
+    }
+
+    #[test]
+    fn the_processor_serializes_as_nested_variant() {
+        let text = ron::to_string(&Processor::Valyu(ValyuMode::Fast)).unwrap();
+        assert_eq!(
+            "Valyu(Fast)", text,
+            "Processor RON did not serialize as nested variant"
+        );
     }
 }
