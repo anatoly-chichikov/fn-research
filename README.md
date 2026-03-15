@@ -1,4 +1,4 @@
-# (defn research [ ])
+# fn research
 
 Every deep research tool works the same way: you type a topic, it searches, you get 30 pages of vaguely relevant text. Nobody asked what you actually wanted to know.
 

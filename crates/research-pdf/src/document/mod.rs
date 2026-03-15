@@ -38,29 +38,22 @@ pub trait Exported {
 /// Author signature.
 pub struct Signature {
     name: String,
-    service: String,
 }
 
 impl Signature {
-    /// Create signature from author and service.
-    pub fn new(name: &str, service: &str) -> Self {
+    /// Create signature from author name.
+    pub fn new(name: &str) -> Self {
         Self {
             name: name.to_string(),
-            service: service.to_string(),
         }
     }
 }
 
 impl Signed for Signature {
     fn html(&self) -> String {
-        let repo = "https://github.com/anatoly-chichikov/defn-research";
-        let site = format!("https://{}", self.service);
-        let link = format!("<a href=\"{}\">defn research</a>", repo);
-        let host = format!("<a href=\"{}\">{}</a>", site, self.service);
-        let mark = format!(
-            "<span class=\"signature-mark\">({} [{}]&hairsp;)</span>",
-            link, host
-        );
+        let repo = "https://github.com/anatoly-chichikov/fn-research";
+        let link = format!("<a href=\"{}\"><b>fn research</b></a>", repo);
+        let mark = format!("<span class=\"signature-mark\">{}</span>", link);
         let text = if self.name.is_empty() {
             format!("AI generated report with {}", mark)
         } else {
@@ -208,8 +201,7 @@ impl Rendered for Document<'_> {
         let catalog = catalog(&self.root, self.session);
         let extra = sources::section(&catalog);
         let author_name = (self.author_fn)();
-        let service_name = env::service(self.session.tasks());
-        let sign = Signature::new(&author_name, &service_name);
+        let sign = Signature::new(&author_name);
         let note = sign.html();
         let css_root = std::env::var("RESOURCES_DIR")
             .unwrap_or_else(|_| format!("{}/../../resources", env!("CARGO_MANIFEST_DIR")));
@@ -517,7 +509,7 @@ mod tests {
     }
 
     #[test]
-    fn the_document_renders_service_name() {
+    fn the_document_renders_repo_link() {
         let mut rng = ids::ids(24023);
         let name = ids::cyrillic(&mut rng, 6);
         let value = ids::greek(&mut rng, 5);
@@ -530,7 +522,7 @@ mod tests {
         let author_fn = Box::new(move || name_clone.clone());
         let doc = Document::with_author(&item, &pal, None, &root, author_fn);
         let html = doc.render();
-        assert!(html.contains("parallel.ai"), "Service name was missing");
+        assert!(html.contains("fn-research"), "Repo link was missing");
     }
 
     #[test]

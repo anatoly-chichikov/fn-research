@@ -1,7 +1,6 @@
 use std::path::Path;
 use std::process::Command;
 
-use research_domain::provider::Labeled;
 use research_domain::task::{ResearchRun, Tasked};
 
 /// Return environment value by key.
@@ -56,14 +55,6 @@ pub fn emit(html: &str, path: &Path) -> Result<std::path::PathBuf, String> {
 /// Return report author from env.
 pub fn author() -> String {
     env("REPORT_FOR")
-}
-
-/// Return service name from latest task.
-pub fn service(tasks: &[ResearchRun]) -> String {
-    tasks
-        .last()
-        .map(|t| t.provider().label().to_string())
-        .unwrap_or_else(|| "parallel.ai".to_string())
 }
 
 /// Return provider slug from task service.
