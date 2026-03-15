@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 research-domain = { path = "../research-domain" }
 base64 = { workspace = true }
-edn-rs = { workspace = true }
 image = { workspace = true }
 regex = { workspace = true }
 reqwest = { workspace = true }

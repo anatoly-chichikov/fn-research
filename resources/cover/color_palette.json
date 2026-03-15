@@ -1,0 +1,22 @@
+{
+  "color_palette": {
+    "secondary_colors": {
+      "twilight_pink": { "use": "dawn_dusk_cherry_blossom", "hex": "#d4a5a5" },
+      "plum_purple": { "use": "evening_sky_flowers_fabric", "hex": "#6b4c6e" },
+      "pale_sky": { "use": "daytime_sky_water_reflection", "hex": "#d4dfe4" },
+      "ochre_gold": { "use": "autumn_leaves_metalwork_warmth", "hex": "#c9a227" },
+      "rust_orange": { "use": "autumn_sunset_earth", "hex": "#b55d3b" },
+      "charcoal": { "use": "darkest_shadows_outlines", "hex": "#3a3a3a" },
+      "ash_grey": { "use": "rocks_mist_neutral_elements", "hex": "#8b9090" }
+    },
+    "usage_rule": "use_maximum_5_colors_per_image_for_authentic_limited_palette",
+    "primary_colors": {
+      "faded_vermilion": { "use": "accents_torii_fabric_sun", "hex": "#c75b4a" },
+      "pine_green": { "use": "trees_deep_foliage_shadow", "hex": "#3d5c4e" },
+      "prussian_blue": { "use": "sky_water_shadows_main_areas", "hex": "#1a3a52" },
+      "aged_cream": { "use": "paper_tone_clouds_light_areas", "hex": "#f4efe4" },
+      "deep_indigo": { "use": "night_sky_deep_water_fabric", "hex": "#2c3e6e" },
+      "moss_green": { "use": "foliage_grass_vegetation", "hex": "#6b7c4c" }
+    }
+  }
+}

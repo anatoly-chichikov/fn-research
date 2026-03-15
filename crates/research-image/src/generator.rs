@@ -55,13 +55,9 @@ pub fn compress(data: &[u8], path: &Path, quality: u8) -> Result<PathBuf, String
     Ok(path.to_path_buf())
 }
 
-/// Parse EDN text to JSON.
+/// Parse JSON text to value.
 pub fn parse(text: &str) -> Result<serde_json::Value, String> {
-    let edn: edn_rs::Edn = text
-        .parse()
-        .map_err(|e| format!("EDN parse failed: {:?}", e))?;
-    let json = edn.to_json();
-    serde_json::from_str(&json).map_err(|e| format!("JSON parse failed: {:?}", e))
+    serde_json::from_str(text).map_err(|e| format!("JSON parse failed: {:?}", e))
 }
 
 /// Merge two JSON objects recursively.
@@ -86,7 +82,7 @@ fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../resources")
 }
 
-/// Read and parse resource EDN file.
+/// Read and parse resource JSON file.
 fn resource(name: &str) -> Result<serde_json::Value, String> {
     let path = root().join(name);
     let text = std::fs::read_to_string(&path)
@@ -163,7 +159,7 @@ pub fn generator() -> Result<Generator, String> {
     if key.is_empty() {
         return Err("GEMINI_API_KEY is required".to_string());
     }
-    let data = resource("cover/parts.edn")?;
+    let data = resource("cover/parts.json")?;
     let topic_path = data
         .get("topic")
         .and_then(|v| v.as_str())
@@ -258,9 +254,9 @@ mod tests {
     #[test]
     fn the_generator_includes_wabi_sabi_principles() {
         let mut rng = ids::ids(9011);
-        let data = resource("cover/parts.edn").unwrap();
+        let data = resource("cover/parts.json").unwrap();
         let parts = data.get("image").and_then(|v| v.as_array()).unwrap();
-        let item = "cover/wabi_sabi.edn";
+        let item = "cover/wabi_sabi.json";
         let entry = resource(item).unwrap();
         let node = entry.get("wabi_sabi").unwrap();
         let items = node.get("principles").and_then(|v| v.as_array()).unwrap();
@@ -302,7 +298,7 @@ mod tests {
     fn the_generator_disallows_frames() {
         let mut rng = ids::ids(9017);
         let _mark = ids::cyrillic(&mut rng, 4);
-        let base = resource("cover/quality_requirements.edn").unwrap();
+        let base = resource("cover/quality_requirements.json").unwrap();
         let value = base
             .get("quality_requirements")
             .and_then(|q| q.get("image_integrity"))
@@ -319,8 +315,8 @@ mod tests {
     fn the_generator_requires_edge_to_edge() {
         let mut rng = ids::ids(9021);
         let _mark = ids::cyrillic(&mut rng, 4);
-        let comp = resource("cover/composition_guidelines.edn").unwrap();
-        let qual = resource("cover/quality_requirements.edn").unwrap();
+        let comp = resource("cover/composition_guidelines.json").unwrap();
+        let qual = resource("cover/quality_requirements.json").unwrap();
         let edge = comp
             .get("composition_guidelines")
             .and_then(|c| c.get("edge_to_edge"))
@@ -342,8 +338,8 @@ mod tests {
     fn the_generator_disallows_text() {
         let mut rng = ids::ids(9023);
         let _mark = ids::cyrillic(&mut rng, 4);
-        let qual = resource("cover/quality_requirements.edn").unwrap();
-        let surf = resource("cover/surface_treatment.edn").unwrap();
+        let qual = resource("cover/quality_requirements.json").unwrap();
+        let surf = resource("cover/surface_treatment.json").unwrap();
         let text = qual
             .get("quality_requirements")
             .and_then(|q| q.get("image_integrity"))

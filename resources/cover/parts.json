@@ -1,0 +1,17 @@
+{
+  "topic": "cover/topic.json",
+  "image": [
+    "cover/meta.json",
+    "cover/canvas.json",
+    "cover/style_definition.json",
+    "cover/wabi_sabi.json",
+    "cover/color_palette.json",
+    "cover/surface_treatment.json",
+    "cover/locations_library.json",
+    "cover/metaphor_elements_library.json",
+    "cover/topic_to_visual_mapping.json",
+    "cover/composition_guidelines.json",
+    "cover/generation_process.json",
+    "cover/quality_requirements.json"
+  ]
+}

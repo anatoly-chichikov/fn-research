@@ -1,0 +1,24 @@
+{
+  "canvas": {
+    "edge_behavior": {
+      "right_edge": "scene_continues_past_right_edge_as_if_cropped",
+      "padding_px": 0,
+      "left_edge": "scene_continues_past_left_edge_as_if_cropped",
+      "margin_all_sides_px": 0,
+      "rule": "artwork_touches_all_four_edges",
+      "top_edge": "sky_clouds_trees_mountains_extend_to_and_past_top_edge",
+      "bottom_edge": "ground_water_rocks_roots_extend_to_and_past_bottom_edge",
+      "border_px": 0
+    },
+    "aspect_ratio": "16:9",
+    "orientation": "landscape",
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    },
+    "composition": {
+      "description": "Viewer looks through an invisible window into the scene.\nThe scene exists beyond all edges. Content is cropped by canvas edges,\nnot contained within them.",
+      "type": "full_bleed_continuous_scene"
+    }
+  }
+}

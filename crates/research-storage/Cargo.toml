@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 research-domain = { path = "../research-domain" }
 chrono = { workspace = true }
-edn-rs = "0.17"
 regex = { workspace = true }
 ron = { workspace = true }
 serde = { workspace = true }

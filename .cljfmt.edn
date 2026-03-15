@@ -1,8 +1,0 @@
-{:indentation? true
- :remove-multiple-non-indenting-spaces? true
- :remove-surrounding-whitespace? true
- :remove-trailing-whitespace? true
- :insert-missing-whitespace? true
- :remove-consecutive-blank-lines? true
- :split-keypairs-over-multiple-lines? true
- :sort-ns-references? true}

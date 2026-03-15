@@ -1,0 +1,24 @@
+{
+  "quality_requirements": {
+    "image_integrity": {
+      "surfaces": "all_readable_surfaces_show_texture_only",
+      "lines": "consistent_thin_elegant_weight_at_all_scales",
+      "colors": "flat_with_bokashi_gradation_within_single_hues",
+      "texture": "visible_paper_fiber_woodgrain_throughout",
+      "edges": "content_continues_past_all_four_edges",
+      "text": "no_text_no_letters_no_symbols_no_numbers_no_logos",
+      "edge_fill": "edges_filled_with_scene_texture",
+      "borders": "full_bleed_edge_to_edge_artwork"
+    },
+    "authenticity_markers": {
+      "required": [
+        "washi_paper_texture_visible",
+        "woodblock_print_aesthetic",
+        "limited_color_palette",
+        "bold_confident_outlines",
+        "atmospheric_perspective",
+        "traditional_composition"
+      ]
+    }
+  }
+}

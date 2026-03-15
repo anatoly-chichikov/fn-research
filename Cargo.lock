@@ -697,25 +697,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
 
 [[package]]
-name = "edn-rs"
-version = "0.17.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bc72f43397116f57ab2bf8218d51ff7e432c390cf9d7f1f525f9eb977860dbd"
-dependencies = [
- "ordered-float 4.6.0",
-]
-
-[[package]]
-name = "edn-rs"
-version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bf96499d05b511169ca8e3f8c7686e9004a0b3bc3666cf63910f215f2aae1bf"
-dependencies = [
- "ordered-float 5.1.0",
- "regex",
-]
-
-[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1726,24 +1707,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c87def4c32ab89d880effc9e097653c8da5d6ef28e6b539d313baaacfbafcbe"
 
 [[package]]
-name = "ordered-float"
-version = "4.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bb71e1b3fa6ca1c61f383464aaf2bb0e2f8e772a1f01d486832464de363b951"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
-name = "ordered-float"
-version = "5.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f4779c6901a562440c3786d08192c6fbda7c1c2060edd10006b05ee35d10f2d"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
 name = "parking_lot"
 version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2251,7 +2214,6 @@ dependencies = [
 name = "research-api"
 version = "0.1.0"
 dependencies = [
- "edn-rs 0.19.0",
  "rand 0.10.0",
  "regex",
  "reqwest",
@@ -2300,7 +2262,6 @@ name = "research-image"
 version = "0.1.0"
 dependencies = [
  "base64",
- "edn-rs 0.19.0",
  "image",
  "rand 0.10.0",
  "regex",
@@ -2335,7 +2296,6 @@ name = "research-storage"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "edn-rs 0.17.5",
  "rand 0.10.0",
  "regex",
  "research-domain",

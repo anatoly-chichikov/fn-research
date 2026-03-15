@@ -27,17 +27,12 @@ pub fn items(root: &Path) -> Vec<ResearchSession> {
             .to_string();
         let ron = path.join("session.ron");
         let json = path.join("session.json");
-        let edn = path.join("session.edn");
         if ron.exists() {
             if let Some(item) = load_ron(&ron) {
                 list.push(item);
             }
         } else if json.exists() {
             if let Some(item) = load_json(&json) {
-                list.push(item);
-            }
-        } else if edn.exists() {
-            if let Some(item) = load_edn(&edn) {
                 list.push(item);
             }
         } else if let Some(caps) = rule.captures(&name) {
@@ -95,63 +90,6 @@ fn load_json(path: &Path) -> Option<ResearchSession> {
     let text = fs::read_to_string(path).ok()?;
     let data: serde_json::Value = serde_json::from_str(&text).ok()?;
     Some(session::session(&data))
-}
-
-/// Load session from EDN file (may contain JSON-compatible format).
-fn load_edn(path: &Path) -> Option<ResearchSession> {
-    let text = fs::read_to_string(path).ok()?;
-    let data: serde_json::Value = serde_json::from_str(&text)
-        .ok()
-        .or_else(|| parse_edn_to_json(&text))?;
-    Some(session::session(&data))
-}
-
-/// Parse EDN string into JSON value.
-fn parse_edn_to_json(text: &str) -> Option<serde_json::Value> {
-    let parsed: edn_rs::Edn = text.parse().ok()?;
-    edn_to_json(&parsed)
-}
-
-/// Convert EDN value to JSON value.
-fn edn_to_json(edn: &edn_rs::Edn) -> Option<serde_json::Value> {
-    match edn {
-        edn_rs::Edn::Str(s) => Some(serde_json::Value::String(s.clone())),
-        edn_rs::Edn::Int(n) => Some(serde_json::json!(*n)),
-        edn_rs::Edn::UInt(n) => Some(serde_json::json!(*n)),
-        edn_rs::Edn::Double(n) => {
-            let f: f64 = n.to_string().parse().unwrap_or(0.0);
-            Some(serde_json::json!(f))
-        }
-        edn_rs::Edn::Bool(b) => Some(serde_json::Value::Bool(*b)),
-        edn_rs::Edn::Nil => Some(serde_json::Value::Null),
-        edn_rs::Edn::Key(k) => {
-            let name = k.strip_prefix(':').unwrap_or(k);
-            Some(serde_json::Value::String(name.to_string()))
-        }
-        edn_rs::Edn::Vector(v) => {
-            let vec = v.clone().to_vec();
-            let items: Vec<serde_json::Value> = vec.iter().filter_map(edn_to_json).collect();
-            Some(serde_json::Value::Array(items))
-        }
-        edn_rs::Edn::Map(m) => {
-            let mut map = serde_json::Map::new();
-            let btree = m.clone().to_map();
-            for (k, v) in &btree {
-                let key = k.strip_prefix(':').unwrap_or(k).to_string();
-                if let Some(val) = edn_to_json(v) {
-                    map.insert(key, val);
-                }
-            }
-            Some(serde_json::Value::Object(map))
-        }
-        edn_rs::Edn::List(l) => {
-            let vec = l.clone().to_vec();
-            let items: Vec<serde_json::Value> = vec.iter().filter_map(edn_to_json).collect();
-            Some(serde_json::Value::Array(items))
-        }
-        edn_rs::Edn::Empty => Some(serde_json::Value::Null),
-        _ => None,
-    }
 }
 
 /// List response-*.json files in directory.

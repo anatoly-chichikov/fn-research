@@ -1,4 +1,3 @@
-pub mod collect;
 pub mod fetch;
 
 use std::path::Path;
