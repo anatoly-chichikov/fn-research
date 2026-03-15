@@ -65,7 +65,7 @@ jobs:
           file: Dockerfile.test.rust
           load: true
           tags: research-test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=integration
+          cache-to: type=gha,scope=integration,mode=max
       - name: Run integration tests
         run: docker run --rm -e REPORT_FOR=CI research-test -- --ignored --test-threads=1
