@@ -81,7 +81,7 @@ pub fn digit(rng: &mut StdRng, bound: u32) -> u32 {
     rng.random_range(0..bound)
 }
 
-/// Return deterministic time string matching Clojure test pattern.
+/// Return deterministic time string for tests.
 pub fn time(rng: &mut StdRng) -> String {
     let day = 1 + rng.random_range(0..8u32);
     let hour = 1 + rng.random_range(0..8u32);
