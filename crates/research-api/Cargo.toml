@@ -1,0 +1,19 @@
+[package]
+name = "research-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+research-domain = { path = "../research-domain" }
+edn-rs = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+url = { workspace = true }
+uuid = { workspace = true }
+reqwest = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }
+tempfile = { workspace = true }
+research-domain = { path = "../research-domain", features = ["test-support"] }

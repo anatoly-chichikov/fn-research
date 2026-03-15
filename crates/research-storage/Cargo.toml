@@ -1,0 +1,18 @@
+[package]
+name = "research-storage"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+research-domain = { path = "../research-domain" }
+chrono = { workspace = true }
+edn-rs = "0.17"
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }
+research-domain = { path = "../research-domain", features = ["test-support"] }
+tempfile = "3.15"

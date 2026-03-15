@@ -8,16 +8,17 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    container: clojure:temurin-21-lein
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install dependencies
-        run: lein with-profile +dev deps
-      - name: Lint
-        run: lein lint
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
       - name: Format check
-        run: lein fmt:check
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy --workspace -- -D warnings
 
   tests:
     runs-on: ubuntu-latest
@@ -25,14 +26,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build test image
-        run: docker build -t research-test -f Dockerfile.test .
-      - name: Unit tests
-        run: docker run --rm research-test :unit
-      - name: Integration tests
-        run: docker run --rm -v "${{ github.workspace }}/tmp_cache:/app/tmp_cache" research-test :integration
-      - name: Upload screenshots on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: pdf-screenshots
-          path: tmp_cache
+        run: docker build -t research-test -f Dockerfile.test.rust .
+      - name: Run tests
+        run: docker run --rm research-test

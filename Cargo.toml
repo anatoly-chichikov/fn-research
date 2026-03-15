@@ -1,0 +1,27 @@
+[workspace]
+members = [
+    "crates/research-domain",
+    "crates/research-api",
+    "crates/research-storage",
+    "crates/research-pdf",
+    "crates/research-image",
+    "crates/research-cli",
+]
+resolver = "2"
+
+[workspace.dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+comrak = "0.37"
+dom_query = "0.7"
+regex = "1.11"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tempfile = "3.15"
+thiserror = "2.0"
+url = "2.5"
+uuid = { version = "1.11", features = ["v4"] }
+rand = "0.9"
+base64 = "0.22"
+image = "0.25"
+edn-rs = { version = "0.17", features = ["json"] }
+reqwest = { version = "0.12", features = ["blocking", "json"] }

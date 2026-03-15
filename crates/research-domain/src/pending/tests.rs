@@ -1,0 +1,410 @@
+use crate::ids;
+use crate::pending::{self, Pendinged};
+
+#[test]
+fn the_pending_returns_identifier() {
+    let mut rng = ids::ids(13001);
+    let run = ids::cyrillic(&mut rng, 6);
+    let topic_part = ids::hiragana(&mut rng, 6);
+    let item_part = ids::greek(&mut rng, 4);
+    let query = format!("{}\n\nResearch:\n{}", topic_part, item_part);
+    let processor = ids::greek(&mut rng, 6);
+    let language = ids::cyrillic(&mut rng, 6);
+    let provider = ids::cyrillic(&mut rng, 6);
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": processor,
+        "language": language,
+        "provider": provider
+    }));
+    assert_eq!(
+        run,
+        item.id(),
+        "Pending identifier did not match provided value"
+    );
+}
+
+#[test]
+fn the_pending_returns_query() {
+    let mut rng = ids::ids(13003);
+    let run = ids::cyrillic(&mut rng, 6);
+    let topic = ids::hiragana(&mut rng, 6);
+    let item_text = ids::greek(&mut rng, 4);
+    let query = format!("{}\n\nResearch:\n{}", topic, item_text);
+    let processor = ids::greek(&mut rng, 6);
+    let language = ids::cyrillic(&mut rng, 6);
+    let provider = ids::cyrillic(&mut rng, 6);
+    let pend = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": processor,
+        "language": language,
+        "provider": provider
+    }));
+    let text = pend.query();
+    let ok = text.contains(&language) && text.contains(&topic) && text.contains(&item_text);
+    assert!(ok, "Pending query did not include language and query");
+}
+
+#[test]
+fn the_pending_returns_processor() {
+    let mut rng = ids::ids(13005);
+    let run = ids::cyrillic(&mut rng, 6);
+    let topic_part = ids::hiragana(&mut rng, 6);
+    let item_part = ids::greek(&mut rng, 4);
+    let query = format!("{}\n\nResearch:\n{}", topic_part, item_part);
+    let processor = ids::greek(&mut rng, 6);
+    let language = ids::cyrillic(&mut rng, 6);
+    let provider = ids::cyrillic(&mut rng, 6);
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": processor,
+        "language": language,
+        "provider": provider
+    }));
+    assert_eq!(
+        processor,
+        item.processor(),
+        "Pending processor did not match provided value"
+    );
+}
+
+#[test]
+fn the_pending_returns_language() {
+    let mut rng = ids::ids(13007);
+    let run = ids::cyrillic(&mut rng, 6);
+    let topic_part = ids::hiragana(&mut rng, 6);
+    let item_part = ids::greek(&mut rng, 4);
+    let query = format!("{}\n\nResearch:\n{}", topic_part, item_part);
+    let processor = ids::greek(&mut rng, 6);
+    let language = ids::cyrillic(&mut rng, 6);
+    let provider = ids::cyrillic(&mut rng, 6);
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": processor,
+        "language": language,
+        "provider": provider
+    }));
+    assert_eq!(
+        language,
+        item.language(),
+        "Pending language did not match provided value"
+    );
+}
+
+#[test]
+fn the_pending_serializes_correctly() {
+    let mut rng = ids::ids(13009);
+    let run = ids::cyrillic(&mut rng, 6);
+    let topic_part = ids::hiragana(&mut rng, 6);
+    let item_part = ids::greek(&mut rng, 4);
+    let query = format!("{}\n\nResearch:\n{}", topic_part, item_part);
+    let processor = ids::greek(&mut rng, 6);
+    let language = ids::cyrillic(&mut rng, 6);
+    let provider = ids::cyrillic(&mut rng, 6);
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": processor,
+        "language": language,
+        "provider": provider
+    }));
+    let data = item.data();
+    let brief_val = data.get("brief").unwrap();
+    let brief_obj: &serde_json::Map<String, serde_json::Value> = brief_val.as_object().unwrap();
+    let items = brief_obj.get("items").unwrap().as_array().unwrap();
+    let node = &items[0];
+    let ok = data.contains_key("run_id")
+        && data.contains_key("processor")
+        && data.contains_key("language")
+        && data.contains_key("brief")
+        && brief_obj.contains_key("topic")
+        && brief_obj.contains_key("items")
+        && node.get("text").is_some()
+        && node.get("items").is_some()
+        && !brief_obj.contains_key("text")
+        && !data.contains_key("query");
+    assert!(
+        ok,
+        "Pending serialize did not include brief or still included query"
+    );
+}
+
+#[test]
+fn the_pending_parses_nested_query_items() {
+    let mut rng = ids::ids(13010);
+    let run = ids::cyrillic(&mut rng, 6);
+    let head = ids::greek(&mut rng, 5);
+    let inner = ids::armenian(&mut rng, 5);
+    let tail = ids::hiragana(&mut rng, 5);
+    let topic_part = ids::cyrillic(&mut rng, 6);
+    let query = format!(
+        "{}\n\nResearch:\n{}\n\t{}\n{}",
+        topic_part, head, inner, tail
+    );
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": ids::greek(&mut rng, 6),
+        "language": ids::cyrillic(&mut rng, 6),
+        "provider": ids::cyrillic(&mut rng, 6)
+    }));
+    let brief = item.brief();
+    let items = &brief.items;
+    let node = &items[0];
+    let peer = &items[1];
+    let ok = node.text == head && node.items[0].text == inner && peer.text == tail;
+    assert!(ok, "Pending nested query items were not parsed");
+}
+
+#[test]
+fn the_pending_deserializes_correctly() {
+    let mut rng = ids::ids(13011);
+    let run = ids::cyrillic(&mut rng, 6);
+    let query = ids::hiragana(&mut rng, 6);
+    let processor = ids::greek(&mut rng, 6);
+    let language = ids::cyrillic(&mut rng, 6);
+    let provider = ids::cyrillic(&mut rng, 6);
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": processor,
+        "language": language,
+        "provider": provider
+    }));
+    assert_eq!(
+        run,
+        item.id(),
+        "Pending deserialize did not restore identifier"
+    );
+}
+
+#[test]
+fn the_pending_returns_provider() {
+    let mut rng = ids::ids(13013);
+    let run = ids::cyrillic(&mut rng, 6);
+    let query = ids::hiragana(&mut rng, 6);
+    let processor = ids::greek(&mut rng, 6);
+    let language = ids::cyrillic(&mut rng, 6);
+    let name = ids::cyrillic(&mut rng, 6);
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": processor,
+        "language": language,
+        "provider": name
+    }));
+    assert_eq!(
+        name,
+        item.provider(),
+        "Pending provider did not match provided value"
+    );
+}
+
+#[test]
+fn the_pending_prefers_explicit_topic_in_brief() {
+    let mut rng = ids::ids(13017);
+    let run = ids::cyrillic(&mut rng, 6);
+    let mark = ids::hiragana(&mut rng, 6);
+    let topic_part = ids::greek(&mut rng, 6);
+    let item_part = ids::armenian(&mut rng, 4);
+    let query = format!("{}\n\nResearch:\n{}", topic_part, item_part);
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": ids::greek(&mut rng, 6),
+        "language": ids::cyrillic(&mut rng, 6),
+        "provider": ids::cyrillic(&mut rng, 6),
+        "topic": mark
+    }));
+    let brief = item.brief();
+    assert_eq!(
+        mark, brief.topic,
+        "Pending brief did not use explicit topic"
+    );
+}
+
+#[test]
+fn the_pending_serializes_provider() {
+    let mut rng = ids::ids(13015);
+    let run = ids::cyrillic(&mut rng, 6);
+    let query = ids::hiragana(&mut rng, 6);
+    let processor = ids::greek(&mut rng, 6);
+    let language = ids::cyrillic(&mut rng, 6);
+    let name = ids::hiragana(&mut rng, 6);
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": processor,
+        "language": language,
+        "provider": name
+    }));
+    let data = item.data();
+    assert_eq!(
+        name,
+        data.get("provider").unwrap().as_str().unwrap(),
+        "Pending serialize did not include provider"
+    );
+}
+
+#[test]
+fn the_pending_parses_compound_numbered_items_at_depth_two() {
+    let mut rng = ids::ids(13019);
+    let run = ids::cyrillic(&mut rng, 6);
+    let root = ids::greek(&mut rng, 5);
+    let child = ids::armenian(&mut rng, 5);
+    let sibling = ids::hiragana(&mut rng, 5);
+    let topic_part = ids::cyrillic(&mut rng, 6);
+    let query = format!(
+        "{}\n\nResearch:\n1. {}\n  1.1. {}\n2. {}",
+        topic_part, root, child, sibling
+    );
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": ids::greek(&mut rng, 6),
+        "language": ids::cyrillic(&mut rng, 6),
+        "provider": ids::cyrillic(&mut rng, 6)
+    }));
+    let brief = item.brief();
+    let node = &brief.items[0];
+    assert_eq!(
+        child, node.items[0].text,
+        "Compound numbered sub-item was not nested under parent"
+    );
+}
+
+#[test]
+fn the_pending_parses_indented_compound_items_at_depth_two() {
+    let mut rng = ids::ids(13021);
+    let run = ids::cyrillic(&mut rng, 6);
+    let root = ids::hebrew(&mut rng, 5);
+    let child = ids::armenian(&mut rng, 5);
+    let tail = ids::greek(&mut rng, 5);
+    let topic_part = ids::cyrillic(&mut rng, 6);
+    let query = format!(
+        "{}\n\nResearch:\n1. {}\n    1.1. {}\n2. {}",
+        topic_part, root, child, tail
+    );
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": ids::greek(&mut rng, 6),
+        "language": ids::cyrillic(&mut rng, 6),
+        "provider": ids::cyrillic(&mut rng, 6)
+    }));
+    let brief = item.brief();
+    let node = &brief.items[0];
+    assert_eq!(
+        child, node.items[0].text,
+        "Indented compound item was not nested at depth two"
+    );
+}
+
+#[test]
+fn the_pending_parses_triple_compound_items_at_depth_three() {
+    let mut rng = ids::ids(13023);
+    let run = ids::cyrillic(&mut rng, 6);
+    let root = ids::greek(&mut rng, 5);
+    let mid = ids::armenian(&mut rng, 5);
+    let leaf = ids::hebrew(&mut rng, 5);
+    let topic_part = ids::cyrillic(&mut rng, 6);
+    let query = format!(
+        "{}\n\nResearch:\n1. {}\n  1.1. {}\n    1.1.1. {}",
+        topic_part, root, mid, leaf
+    );
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": ids::greek(&mut rng, 6),
+        "language": ids::cyrillic(&mut rng, 6),
+        "provider": ids::cyrillic(&mut rng, 6)
+    }));
+    let brief = item.brief();
+    let node = &brief.items[0];
+    let sub = &node.items[0];
+    assert_eq!(
+        leaf, sub.items[0].text,
+        "Triple compound item was not nested at depth three"
+    );
+}
+
+#[test]
+fn the_pending_parses_tab_indented_items() {
+    let mut rng = ids::ids(13025);
+    let run = ids::cyrillic(&mut rng, 6);
+    let root = ids::greek(&mut rng, 5);
+    let child = ids::armenian(&mut rng, 5);
+    let sibling = ids::hiragana(&mut rng, 5);
+    let topic_part = ids::cyrillic(&mut rng, 6);
+    let query = format!(
+        "{}\n\nResearch:\n{}\n\t{}\n{}",
+        topic_part, root, child, sibling
+    );
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": ids::greek(&mut rng, 6),
+        "language": ids::cyrillic(&mut rng, 6),
+        "provider": ids::cyrillic(&mut rng, 6)
+    }));
+    let brief = item.brief();
+    let node = &brief.items[0];
+    assert_eq!(
+        child, node.items[0].text,
+        "Tab-indented sub-item was not nested under parent"
+    );
+}
+
+#[test]
+fn the_pending_renders_numbered_brief() {
+    let mut rng = ids::ids(13029);
+    let run = ids::cyrillic(&mut rng, 6);
+    let root = ids::greek(&mut rng, 5);
+    let child = ids::armenian(&mut rng, 5);
+    let topic_part = ids::cyrillic(&mut rng, 6);
+    let query = format!("{}\n\nResearch:\n{}\n\t{}", topic_part, root, child);
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": ids::greek(&mut rng, 6),
+        "language": ids::cyrillic(&mut rng, 6),
+        "provider": ids::cyrillic(&mut rng, 6)
+    }));
+    let text = item.query();
+    assert!(
+        text.contains("1.1. "),
+        "Rendered brief did not contain hierarchical numbering"
+    );
+}
+
+#[test]
+fn the_pending_parses_double_tab_items_at_depth_three() {
+    let mut rng = ids::ids(13027);
+    let run = ids::cyrillic(&mut rng, 6);
+    let root = ids::greek(&mut rng, 5);
+    let mid = ids::armenian(&mut rng, 5);
+    let leaf = ids::hebrew(&mut rng, 5);
+    let topic_part = ids::cyrillic(&mut rng, 6);
+    let query = format!(
+        "{}\n\nResearch:\n{}\n\t{}\n\t\t{}",
+        topic_part, root, mid, leaf
+    );
+    let item = pending::pending(&serde_json::json!({
+        "run_id": run,
+        "query": query,
+        "processor": ids::greek(&mut rng, 6),
+        "language": ids::cyrillic(&mut rng, 6),
+        "provider": ids::cyrillic(&mut rng, 6)
+    }));
+    let brief = item.brief();
+    let node = &brief.items[0];
+    let sub = &node.items[0];
+    assert_eq!(
+        leaf, sub.items[0].text,
+        "Double-tab item was not nested at depth three"
+    );
+}

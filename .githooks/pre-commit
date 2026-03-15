@@ -2,21 +2,33 @@
 set -euo pipefail
 
 repo="$(git rev-parse --show-toplevel)"
-cache="${HOME}/.m2"
+cache="${HOME}/.cargo/registry"
+target="${repo}/target"
 delta="$(git diff --name-only --cached)"
 build=0
-docker run --rm -v "${repo}":/app -v "${cache}":/root/.m2 -w /app clojure:temurin-21-lein lein lint
-docker run --rm -v "${repo}":/app -v "${cache}":/root/.m2 -w /app clojure:temurin-21-lein lein fmt:check
+if ! docker image inspect research-lint >/dev/null 2>&1; then
+  docker build -t research-lint -f - "${repo}" <<'DOCKERFILE'
+FROM rust:bookworm
+RUN rustup component add rustfmt clippy
+WORKDIR /app
+DOCKERFILE
+fi
+docker run --rm \
+  -v "${repo}":/app \
+  -v "${cache}":/usr/local/cargo/registry \
+  -v "${target}":/app/target \
+  -w /app research-lint \
+  bash -c "cargo fmt --all -- --check && cargo clippy --workspace -- -D warnings"
 if [ -z "${delta}" ]; then
   delta="$(git diff --name-only)"
 fi
 if ! docker image inspect research-test >/dev/null 2>&1; then
   build=1
-elif echo "${delta}" | grep -E -q '^(project\.clj|tests\.edn|Dockerfile\.test|src/|test/|resources/)'; then
+elif echo "${delta}" | grep -E -q '^(Cargo\.|crates/|Dockerfile\.test\.rust)'; then
   build=1
 fi
 if [ "${build}" -eq 1 ]; then
-  docker build -t research-test -f "${repo}/Dockerfile.test" "${repo}"
+  docker build -t research-test -f "${repo}/Dockerfile.test.rust" "${repo}"
 else
   echo "Skipping docker build because no relevant changes"
 fi

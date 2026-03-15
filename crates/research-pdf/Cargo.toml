@@ -1,0 +1,22 @@
+[package]
+name = "research-pdf"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+research-domain = { path = "../research-domain" }
+research-api = { path = "../research-api" }
+research-storage = { path = "../research-storage" }
+chrono = { workspace = true }
+comrak = { workspace = true }
+dom_query = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tempfile = { workspace = true }
+tendril = "0.4"
+url = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }
+research-domain = { path = "../research-domain", features = ["test-support"] }
