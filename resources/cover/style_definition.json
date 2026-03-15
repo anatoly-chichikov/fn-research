@@ -1,0 +1,40 @@
+{
+  "style_definition": {
+    "era": "edo_period_1603_1868",
+    "primary_master": "katsushika_hokusai",
+    "rendering_quality": {
+      "aesthetic": "handcrafted_printed_artwork",
+      "detail_level": "high_detail_through_fine_lines_not_photorealism",
+      "finish": "matte_paper_surface",
+      "dimensionality": "flat_with_atmospheric_depth"
+    },
+    "secondary_masters": [
+      "utagawa_hiroshige",
+      "utagawa_kuniyoshi",
+      "kawanabe_kyosai"
+    ],
+    "color_application": {
+      "saturation": "slightly_muted_as_if_naturally_aged",
+      "gradients": "only_bokashi_technique_soft_fade_within_single_hue",
+      "method": "flat_color_areas_with_subtle_gradation",
+      "layering": "visible_color_block_overlaps"
+    },
+    "line_work": {
+      "close_up_figures": "maintain_same_delicate_line_weight_as_landscapes",
+      "reference_style": "bijin-ga_portraits_and_landscape_series_line_quality",
+      "detail_expression": "achieved_through_finer_detail_density_not_thicker_lines",
+      "uniformity": "same_line_thickness_for_distant_and_close_subjects",
+      "weight": "delicate_fine_lines_throughout",
+      "quality": "elegant_thin_consistent",
+      "character": "confident_fluid_brushwork_translated_to_carved_wood"
+    },
+    "art_form": "traditional_japanese_woodblock_print",
+    "texture": {
+      "age": "gentle_patina_slight_yellowing_of_light_areas",
+      "paper": "visible_washi_fiber_texture_throughout",
+      "wood": "subtle_woodgrain_pattern_in_flat_areas",
+      "imperfections": "small_organic_irregularities_fiber_inclusions",
+      "ink": "slight_absorption_spread_at_line_edges"
+    }
+  }
+}

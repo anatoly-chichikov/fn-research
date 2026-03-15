@@ -1,0 +1,20 @@
+[package]
+name = "research-domain"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+test-support = ["rand"]
+
+[dependencies]
+chrono = { workspace = true }
+rand = { workspace = true, optional = true }
+regex = { workspace = true }
+ron = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }

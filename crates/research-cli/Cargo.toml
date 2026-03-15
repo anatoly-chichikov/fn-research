@@ -1,0 +1,25 @@
+[package]
+name = "research-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "research"
+path = "src/main.rs"
+
+[dependencies]
+research-domain = { path = "../research-domain" }
+research-api = { path = "../research-api" }
+research-storage = { path = "../research-storage" }
+research-pdf = { path = "../research-pdf" }
+research-image = { path = "../research-image" }
+chrono = { workspace = true }
+reqwest = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+image = { workspace = true }
+ron = { workspace = true }
+research-domain = { path = "../research-domain", features = ["test-support"] }

@@ -1,0 +1,27 @@
+{
+  "composition_guidelines": {
+    "visual_flow": {
+      "description": "natural_lines_guide_viewer_through_composition",
+      "techniques": ["diagonal_movement", "s_curve", "river_path", "branch_lines"]
+    },
+    "depth_layers": {
+      "background": "atmospheric_mountains_sky_distant_elements",
+      "foreground": "detailed_elements_rocks_plants_objects",
+      "midground": "main_subject_figures_structures"
+    },
+    "negative_space": {
+      "description": "generous_empty_areas_sky_mist_water_for_breathing_room",
+      "minimum_percentage": 20,
+      "importance": "essential"
+    },
+    "focal_point": {
+      "support": "secondary_elements_lead_eye_to_focal_point",
+      "placement": "rule_of_thirds_off_center",
+      "clarity": "one_clear_area_of_interest"
+    },
+    "edge_to_edge": {
+      "description": "scene_elements_cross_all_edges",
+      "rule": "full_bleed_composition_with_cropping"
+    }
+  }
+}

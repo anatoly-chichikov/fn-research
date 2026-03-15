@@ -1,0 +1,52 @@
+{
+  "wabi_sabi": {
+    "principles": [
+      {
+        "name_jp": "\u7c21\u7d20",
+        "label": "simplicity",
+        "id": "kanzo",
+        "essence": "minimal_elements_with_intentional_omission"
+      },
+      {
+        "name_jp": "\u4e0d\u5747\u6b63",
+        "label": "asymmetry",
+        "id": "fukinsei",
+        "essence": "asymmetry_over_balance_following_nature"
+      },
+      {
+        "name_jp": "\u6e0b\u5473",
+        "label": "understatement",
+        "id": "shibumi",
+        "essence": "beauty_in_understatement_without_obviousness"
+      },
+      {
+        "name_jp": "\u81ea\u7136",
+        "label": "naturalness",
+        "id": "shizen",
+        "essence": "naturalness_without_pretension"
+      },
+      {
+        "name_jp": "\u5e7d\u7384",
+        "label": "subtle_grace",
+        "id": "yugen",
+        "essence": "subtle_grace_with_mystery"
+      },
+      {
+        "name_jp": "\u8131\u4fd7",
+        "label": "freedom_from_habit",
+        "id": "datsuzoku",
+        "essence": "freedom_from_habitual_expectations"
+      },
+      {
+        "name_jp": "\u6e05\u5bc2",
+        "label": "tranquility",
+        "id": "seijaku",
+        "essence": "inner_calm_and_tranquility"
+      }
+    ],
+    "rules": {
+      "dominant_ratio": "70_80_percent_composition",
+      "dominant_tones": "muted_earthy"
+    }
+  }
+}

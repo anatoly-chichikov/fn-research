@@ -31,7 +31,7 @@ New research. Dialog first, then launch.
 ### Inline parameters
 
 parse rs [provider] [processor] <topic>
-  - first token after `rs`: check if known provider (parallel, valyu, xai, all)
+  - first token after `rs`: check if known provider (parallel, valyu, xai)
   - if provider matched, next token: check if valid processor for that provider
   - remaining tokens = topic
   - if first token is NOT a provider — entire string is topic, ask provider/processor interactively
@@ -41,7 +41,6 @@ enum providers
   - parallel: pro, pro-fast, ultra, ultra-fast, ultra2x, ultra2x-fast, ultra4x, ultra4x-fast, ultra8x, ultra8x-fast
   - valyu: fast, standard, heavy
   - xai: social, full
-  - all: inherits parallel processors (runs parallel then valyu)
 
 ### Interactive questions
 
@@ -59,7 +58,6 @@ ask provider (skip if inline) Which data provider?
   - parallel (cheaper and faster)
   - valyu (more thorough, premium result)
   - xai (social sources)
-  - all (run parallel then valyu)
 
 ask processor (skip if inline) What compute level?
   - parallel: pro, ultra, ultra8x
@@ -220,14 +218,6 @@ Research:
 →[sub-topic text]
 ```
 
-#### Dual runs
-
-when user asks for two runs at once
-  - ask same questions twice, explicitly for run A then run B (no multi-select)
-  - collect params for run A and run B (topic, language, provider, processor)
-  - each run gets own structured brief generation (Phase 1 + Phase 2)
-  - start two docker containers (different names) and report both
-
 ### Title
 
 rule Title is most important — appears in PDF, folder name, session list
@@ -266,8 +256,6 @@ run docker run -d --name "research-{timestamp}-{slug}" \
     -e PARALLEL_API_KEY -e VALYU_API_KEY -e GEMINI_API_KEY -e REPORT_FOR -e XAI_API_KEY \
     research run "{topic}" $'Язык ответа: {language}.\n\n{brief}' --processor "{processor}" --language "{language}" --provider "{provider}"
 
-when two runs → run command twice with different {timestamp}-{slug} values
-
 notify container_name
 notify estimated_time
 notify pdf_path — exact full path (no wildcards!), build after getting session ID
@@ -297,7 +285,7 @@ ask type What should we do?
   2. deep-dive — go deeper into part of the result
 
 when re-brief
-  step 1 Load brief from selected session: prefer output/<session>/brief-*.md, fallback output/<session>/input-*.md
+  step 1 Load brief from selected session: parse output/<session>/session.ron and extract the brief from the session structure
   step 2 Ask user for changes using structured brief format (3 root topics × 3 sub-topics from rs)
   step 3 Show diff preview (original brief vs updated brief) before launch, ask confirmation
   step 4 Run new research with updated brief (provider/processor default to original unless user overrides)
@@ -354,8 +342,8 @@ notify pdf_path (full path)
 Run tests in Docker container.
 
 run docker build -t research-test -f Dockerfile.test .
-run docker run --rm research-test :unit
-run docker run --rm -v "$(pwd)/tmp_cache:/app/tmp_cache" research-test :integration
+run docker run --rm research-test
+run docker run --rm -v "$(pwd)/tmp_cache:/app/tmp_cache" -e REPORT_FOR research-test -- --ignored --test-threads=1
 
 notify test results (pass/fail count)
 
@@ -380,6 +368,7 @@ Tip: add `-fast` for speed (pro-fast, ultra-fast)
 | `fast` | Quickest, lighter research |
 | `standard` | Balanced depth and speed |
 | `heavy` | Deeper, more thorough |
+| `max` | Exhaustive multi-source analysis |
 
 ---
 

@@ -1,0 +1,74 @@
+{
+  "topic_to_visual_mapping": {
+    "mathematics": {
+      "atmosphere": ["high_noon", "snow_country"],
+      "elements": ["soroban", "go_board", "whirlpool", "branching"],
+      "locations": ["zen_garden", "bamboo_grove", "star_tower"]
+    },
+    "ai_machine_learning": {
+      "atmosphere": ["blue_twilight", "full_moon", "dense_fog"],
+      "elements": ["karakuri", "soroban", "spider_web", "kitsune"],
+      "locations": ["craftsman_workshop", "scroll_archive", "star_tower"]
+    },
+    "programming": {
+      "atmosphere": ["dawn", "dense_fog", "high_noon"],
+      "elements": ["loom", "printing_blocks", "branching", "scroll"],
+      "locations": ["bamboo_grove", "craftsman_workshop", "zen_garden"]
+    },
+    "networking": {
+      "atmosphere": ["high_noon", "dawn"],
+      "elements": ["spider_web", "irrigation", "signal_fire", "ant_trail"],
+      "locations": ["river_valley", "island_sea", "fishing_harbor"]
+    },
+    "philosophy": {
+      "atmosphere": ["dawn", "dense_fog", "full_moon"],
+      "elements": ["monk", "mirror", "root_system", "stream"],
+      "locations": ["zen_garden", "mountain_range", "mirror_lake"]
+    },
+    "security": {
+      "atmosphere": ["full_moon", "approaching_storm"],
+      "elements": ["lock", "shimenawa", "samurai", "treasure_box"],
+      "locations": ["mountain_castle", "mountain_cave", "shrine_approach"]
+    },
+    "psychology": {
+      "atmosphere": ["blue_twilight", "dense_fog", "rain_shower"],
+      "elements": ["mirror", "chrysalis", "kitsune", "echo"],
+      "locations": ["zen_garden", "tea_path", "pine_forest"]
+    },
+    "spirituality": {
+      "atmosphere": ["dawn", "dense_fog", "full_moon"],
+      "elements": ["monk", "kami", "shimenawa", "incense"],
+      "locations": ["temple_complex", "shrine_approach", "sacred_waterfall"]
+    },
+    "history": {
+      "atmosphere": ["golden_hour", "approaching_storm"],
+      "elements": ["scroll", "samurai", "map", "tree_rings"],
+      "locations": ["mountain_castle", "temple_complex", "marketplace"]
+    },
+    "creativity": {
+      "atmosphere": ["golden_hour", "rain_shower", "dawn"],
+      "elements": ["calligrapher", "ink_stone", "musician", "phoenix"],
+      "locations": ["cherry_grove", "tea_path", "craftsman_workshop"]
+    },
+    "biology": {
+      "atmosphere": ["dawn", "rain_shower", "golden_hour"],
+      "elements": ["chrysalis", "sprout", "medicine_box", "coral"],
+      "locations": ["flower_meadow", "pine_forest", "sacred_waterfall"]
+    },
+    "business_economics": {
+      "atmosphere": ["high_noon", "golden_hour"],
+      "elements": ["scales", "merchant", "irrigation", "beehive"],
+      "locations": ["marketplace", "fishing_harbor", "rice_terraces"]
+    },
+    "science": {
+      "atmosphere": ["dawn", "lightning", "full_moon"],
+      "elements": ["astrolabe", "telescope", "diagram", "lightning"],
+      "locations": ["star_tower", "mountain_cave", "sacred_waterfall"]
+    },
+    "conflict": {
+      "atmosphere": ["approaching_storm", "lightning", "blue_twilight"],
+      "elements": ["samurai", "dragon", "oni", "katana"],
+      "locations": ["mountain_castle", "coastal_cliffs", "volcanic_land"]
+    }
+  }
+}

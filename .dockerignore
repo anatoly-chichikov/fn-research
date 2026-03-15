@@ -7,4 +7,5 @@
 __pycache__
 output
 tmp_codex_schema
+target
 .gitignore
