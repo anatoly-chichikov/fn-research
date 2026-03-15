@@ -1,4 +1,0 @@
-{:linters {:line-length {:level :error
-                          :max-line-length 80}
-           :unresolved-var {:exclude [org.httpkit.client/get
-                                      org.httpkit.client/post]}}}

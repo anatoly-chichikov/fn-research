@@ -1,1 +1,0 @@
-{:python {:deps ["xai-sdk" "protobuf" "weasyprint"]}}
