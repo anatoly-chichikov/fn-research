@@ -80,8 +80,10 @@ fn merge(base: &mut serde_json::Value, over: &serde_json::Value) {
 
 /// Return resources path.
 fn root() -> PathBuf {
-    let manifest = env!("CARGO_MANIFEST_DIR");
-    PathBuf::from(manifest).join("../../resources")
+    if let Ok(dir) = std::env::var("RESOURCES_DIR") {
+        return PathBuf::from(dir);
+    }
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../resources")
 }
 
 /// Read and parse resource EDN file.

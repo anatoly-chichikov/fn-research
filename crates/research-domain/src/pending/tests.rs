@@ -115,16 +115,16 @@ fn the_pending_serializes_correctly() {
     let data = item.data();
     let brief_val = data.get("brief").unwrap();
     let brief_obj: &serde_json::Map<String, serde_json::Value> = brief_val.as_object().unwrap();
-    let items = brief_obj.get("items").unwrap().as_array().unwrap();
-    let node = &items[0];
+    let questions = brief_obj.get("questions").unwrap().as_array().unwrap();
+    let node = &questions[0];
     let ok = data.contains_key("run_id")
         && data.contains_key("processor")
         && data.contains_key("language")
         && data.contains_key("brief")
-        && brief_obj.contains_key("topic")
-        && brief_obj.contains_key("items")
-        && node.get("text").is_some()
-        && node.get("items").is_some()
+        && brief_obj.contains_key("title")
+        && brief_obj.contains_key("questions")
+        && node.get("scope").is_some()
+        && node.get("details").is_some()
         && !brief_obj.contains_key("text")
         && !data.contains_key("query");
     assert!(
@@ -153,10 +153,10 @@ fn the_pending_parses_nested_query_items() {
         "provider": ids::cyrillic(&mut rng, 6)
     }));
     let brief = item.brief();
-    let items = &brief.items;
-    let node = &items[0];
-    let peer = &items[1];
-    let ok = node.text == head && node.items[0].text == inner && peer.text == tail;
+    let questions = &brief.questions;
+    let node = &questions[0];
+    let peer = &questions[1];
+    let ok = node.scope == head && node.details[0].scope == inner && peer.scope == tail;
     assert!(ok, "Pending nested query items were not parsed");
 }
 
@@ -205,7 +205,7 @@ fn the_pending_returns_provider() {
 }
 
 #[test]
-fn the_pending_prefers_explicit_topic_in_brief() {
+fn the_pending_prefers_explicit_title_in_brief() {
     let mut rng = ids::ids(13017);
     let run = ids::cyrillic(&mut rng, 6);
     let mark = ids::hiragana(&mut rng, 6);
@@ -222,8 +222,8 @@ fn the_pending_prefers_explicit_topic_in_brief() {
     }));
     let brief = item.brief();
     assert_eq!(
-        mark, brief.topic,
-        "Pending brief did not use explicit topic"
+        mark, brief.title,
+        "Pending brief did not use explicit title"
     );
 }
 
@@ -270,9 +270,9 @@ fn the_pending_parses_compound_numbered_items_at_depth_two() {
         "provider": ids::cyrillic(&mut rng, 6)
     }));
     let brief = item.brief();
-    let node = &brief.items[0];
+    let node = &brief.questions[0];
     assert_eq!(
-        child, node.items[0].text,
+        child, node.details[0].scope,
         "Compound numbered sub-item was not nested under parent"
     );
 }
@@ -297,9 +297,9 @@ fn the_pending_parses_indented_compound_items_at_depth_two() {
         "provider": ids::cyrillic(&mut rng, 6)
     }));
     let brief = item.brief();
-    let node = &brief.items[0];
+    let node = &brief.questions[0];
     assert_eq!(
-        child, node.items[0].text,
+        child, node.details[0].scope,
         "Indented compound item was not nested at depth two"
     );
 }
@@ -324,10 +324,10 @@ fn the_pending_parses_triple_compound_items_at_depth_three() {
         "provider": ids::cyrillic(&mut rng, 6)
     }));
     let brief = item.brief();
-    let node = &brief.items[0];
-    let sub = &node.items[0];
+    let node = &brief.questions[0];
+    let sub = &node.details[0];
     assert_eq!(
-        leaf, sub.items[0].text,
+        leaf, sub.details[0].scope,
         "Triple compound item was not nested at depth three"
     );
 }
@@ -352,9 +352,9 @@ fn the_pending_parses_tab_indented_items() {
         "provider": ids::cyrillic(&mut rng, 6)
     }));
     let brief = item.brief();
-    let node = &brief.items[0];
+    let node = &brief.questions[0];
     assert_eq!(
-        child, node.items[0].text,
+        child, node.details[0].scope,
         "Tab-indented sub-item was not nested under parent"
     );
 }
@@ -401,10 +401,10 @@ fn the_pending_parses_double_tab_items_at_depth_three() {
         "provider": ids::cyrillic(&mut rng, 6)
     }));
     let brief = item.brief();
-    let node = &brief.items[0];
-    let sub = &node.items[0];
+    let node = &brief.questions[0];
+    let sub = &node.details[0];
     assert_eq!(
-        leaf, sub.items[0].text,
+        leaf, sub.details[0].scope,
         "Double-tab item was not nested at depth three"
     );
 }

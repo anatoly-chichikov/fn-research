@@ -1,0 +1,38 @@
+Brief(
+    title: "Clojure production pain points",
+    language: "English",
+    questions: [
+        Question(
+            scope: "Error messages and stack traces - cryptic JVM exceptions, missing line numbers, macro expansion noise, debugging difficulty in production",
+            details: [],
+        ),
+        Question(
+            scope: "Startup time and memory footprint - JVM cold start impact on serverless/CLI tools, heap requirements, GraalVM native-image tradeoffs",
+            details: [],
+        ),
+        Question(
+            scope: "REPL-driven development gaps - state management pitfalls, namespace reloading issues, production debugging without REPL access",
+            details: [],
+        ),
+        Question(
+            scope: "Concurrency debugging - core.async channel leaks, deadlock diagnosis, STM edge cases, thread pool exhaustion",
+            details: [],
+        ),
+        Question(
+            scope: "Interop friction - Java library integration pain, type hints verbosity, reflection warnings in hot paths",
+            details: [],
+        ),
+        Question(
+            scope: "Dependency management - conflicting library versions, AOT compilation surprises, uberjar size bloat",
+            details: [],
+        ),
+        Question(
+            scope: "Performance profiling - lazy sequence memory traps, transducer vs sequence performance, JIT warmup issues",
+            details: [],
+        ),
+        Question(
+            scope: "Deployment challenges - Docker image size, classpath complexity, environment-specific configuration",
+            details: [],
+        ),
+    ],
+)

@@ -146,6 +146,9 @@ fn complete(
     let org = organizer::organizer(out);
     let name = org.name(original.created(), original.topic(), original.id());
     org.response(&name, provider, resp.raw());
+    let brief_path = org.brief(&name, provider);
+    let brief_ron = brief::encode(content);
+    std::fs::write(&brief_path, brief_ron).ok();
     support::store(&name, provider, resp.raw(), out);
     let text = resp.text();
     let sources = resp.sources();

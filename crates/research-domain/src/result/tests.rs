@@ -1,4 +1,4 @@
-use rand::RngCore;
+use rand::Rng;
 
 use crate::ids;
 use crate::result::{self, CitationSource, Listed, Serialized, Sourced, Summarized};

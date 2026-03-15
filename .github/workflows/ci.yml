@@ -25,7 +25,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Build test image
-        run: docker build -t research-test -f Dockerfile.test.rust .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.test.rust
+          load: true
+          tags: research-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       - name: Run tests
         run: docker run --rm research-test

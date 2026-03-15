@@ -193,14 +193,14 @@ fn the_task_omits_query_serialization() {
     }));
     let data = item.data();
     let brief = data.get("brief").unwrap();
-    let items = brief.get("items").unwrap().as_array().unwrap();
-    let node = &items[0];
+    let questions = brief.get("questions").unwrap().as_array().unwrap();
+    let node = &questions[0];
     let ok = data.contains_key("brief")
-        && brief.get("topic").is_some()
-        && brief.get("items").is_some()
+        && brief.get("title").is_some()
+        && brief.get("questions").is_some()
         && data.get("processor").map(|v| v.as_str().unwrap()) == Some(&processor)
-        && node.get("text").is_some()
-        && node.get("items").is_some()
+        && node.get("scope").is_some()
+        && node.get("details").is_some()
         && brief.get("text").is_none()
         && !data.contains_key("query")
         && !data.contains_key("result");
@@ -225,10 +225,11 @@ fn the_task_renders_nested_brief_items() {
     let id = ids::uuid(&mut rng);
     let value = result::ResearchReport::new(&summary, vec![]);
     let brief = serde_json::json!({
-        "topic": topic,
-        "items": [
-            {"text": first, "items": [{"text": inner, "items": []}]},
-            {"text": second, "items": []}
+        "title": topic,
+        "language": language,
+        "questions": [
+            {"scope": first, "details": [{"scope": inner, "details": []}]},
+            {"scope": second, "details": []}
         ]
     });
     let item = task::task(&serde_json::json!({
@@ -250,7 +251,7 @@ fn the_task_renders_nested_brief_items() {
 }
 
 #[test]
-fn the_task_prefers_explicit_topic_in_brief() {
+fn the_task_prefers_explicit_title_in_brief() {
     let mut rng = ids::ids(11021);
     let time = ids::time(&mut rng);
     let mark = ids::hiragana(&mut rng, 6);
@@ -268,7 +269,7 @@ fn the_task_prefers_explicit_topic_in_brief() {
         "topic": mark
     }));
     let brief = item.brief();
-    assert_eq!(mark, brief.topic, "Task brief did not use explicit topic");
+    assert_eq!(mark, brief.title, "Task brief did not use explicit title");
 }
 
 #[test]
@@ -314,10 +315,10 @@ fn the_task_parses_nested_query_items() {
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
-    let items = &brief.items;
-    let node = &items[0];
-    let peer = &items[1];
-    let ok = node.text == head && node.items[0].text == inner && peer.text == tail;
+    let questions = &brief.questions;
+    let node = &questions[0];
+    let peer = &questions[1];
+    let ok = node.scope == head && node.details[0].scope == inner && peer.scope == tail;
     assert!(ok, "Nested query items were not parsed");
 }
 
@@ -342,9 +343,9 @@ fn the_task_parses_compound_numbered_items_at_depth_two() {
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
-    let node = &brief.items[0];
+    let node = &brief.questions[0];
     assert_eq!(
-        child, node.items[0].text,
+        child, node.details[0].scope,
         "Compound numbered sub-item was not nested under parent"
     );
 }
@@ -370,9 +371,9 @@ fn the_task_parses_indented_compound_items_at_depth_two() {
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
-    let node = &brief.items[0];
+    let node = &brief.questions[0];
     assert_eq!(
-        child, node.items[0].text,
+        child, node.details[0].scope,
         "Indented compound item was not nested at depth two"
     );
 }
@@ -398,10 +399,10 @@ fn the_task_parses_triple_compound_items_at_depth_three() {
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
-    let node = &brief.items[0];
-    let sub = &node.items[0];
+    let node = &brief.questions[0];
+    let sub = &node.details[0];
     assert_eq!(
-        leaf, sub.items[0].text,
+        leaf, sub.details[0].scope,
         "Triple compound item was not nested at depth three"
     );
 }
@@ -427,9 +428,9 @@ fn the_task_parses_tab_indented_items() {
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
-    let node = &brief.items[0];
+    let node = &brief.questions[0];
     assert_eq!(
-        child, node.items[0].text,
+        child, node.details[0].scope,
         "Tab-indented sub-item was not nested under parent"
     );
 }
@@ -479,10 +480,10 @@ fn the_task_parses_double_tab_items_at_depth_three() {
         "created": "2026-01-01T00:00:00"
     }));
     let brief = item.brief();
-    let node = &brief.items[0];
-    let sub = &node.items[0];
+    let node = &brief.questions[0];
+    let sub = &node.details[0];
     assert_eq!(
-        leaf, sub.items[0].text,
+        leaf, sub.details[0].scope,
         "Double-tab item was not nested at depth three"
     );
 }

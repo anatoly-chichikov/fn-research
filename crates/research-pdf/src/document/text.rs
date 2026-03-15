@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use research_domain::brief::Node;
+use research_domain::brief::Question;
 use research_domain::result::Sourced;
 
 /// Escape HTML special characters.
@@ -351,25 +351,25 @@ pub fn listify(text: &str) -> String {
     multi.replace_all(&text, "\n\n").to_string()
 }
 
-/// Normalize brief item.
-pub fn item(node: &Node) -> Node {
-    let text = node.text.trim().to_string();
-    let items: Vec<Node> = node
-        .items
+/// Trim brief question.
+pub fn trim_question(node: &Question) -> Question {
+    let scope = node.scope.trim().to_string();
+    let details: Vec<Question> = node
+        .details
         .iter()
-        .map(item)
-        .filter(|n| !(n.text.is_empty() && n.items.is_empty()))
+        .map(trim_question)
+        .filter(|n| !(n.scope.is_empty() && n.details.is_empty()))
         .collect();
-    Node { text, items }
+    Question { scope, details }
 }
 
 /// Render nested list html.
-pub fn outline(items: &[Node]) -> String {
-    let items: Vec<Node> = items.iter().map(item).collect();
+pub fn outline(items: &[Question]) -> String {
+    let items: Vec<Question> = items.iter().map(trim_question).collect();
     let mut rows = Vec::new();
     for entry in &items {
-        let text = escape(&entry.text);
-        let nest = outline(&entry.items);
+        let text = escape(&entry.scope);
+        let nest = outline(&entry.details);
         let body = if nest.is_empty() { String::new() } else { nest };
         rows.push(format!("<li>{}{}</li>", text, body));
     }
@@ -420,7 +420,7 @@ pub fn paragraphs(html: &str) -> String {
             .any(|tag| body.contains(&format!("<{}", tag)));
         if !has_block && !body.trim().is_empty() {
             let wrapped = format!("<p>{}</p>", body);
-            item.set_html(tendril::StrTendril::from(wrapped.as_str()));
+            item.set_html(wrapped.as_str());
         }
     }
     tree.select("body").inner_html().to_string()
@@ -647,7 +647,7 @@ pub fn markdown(text: &str) -> String {
     options.extension.table = true;
     options.extension.strikethrough = true;
     options.extension.autolink = true;
-    options.render.unsafe_ = true;
+    options.render.r#unsafe = true;
     comrak::markdown_to_html(text, &options)
 }
 
@@ -889,11 +889,11 @@ mod tests {
         let mut rng = ids::ids(21031);
         let head = ids::cyrillic(&mut rng, 6);
         let tail = ids::hiragana(&mut rng, 6);
-        let items = vec![Node {
-            text: head.clone(),
-            items: vec![Node {
-                text: tail.clone(),
-                items: Vec::new(),
+        let items = vec![Question {
+            scope: head.clone(),
+            details: vec![Question {
+                scope: tail.clone(),
+                details: Vec::new(),
             }],
         }];
         let result = outline(&items);

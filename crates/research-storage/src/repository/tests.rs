@@ -196,4 +196,4 @@ fn the_repository_builds_tasks_from_responses() {
     );
 }
 
-use rand::RngCore;
+use rand::Rng;

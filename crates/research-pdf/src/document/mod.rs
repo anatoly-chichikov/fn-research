@@ -133,7 +133,7 @@ pub fn title(session: &dyn Sessioned) -> String {
     };
     match info {
         Some(brief) => {
-            let parsed = &brief.topic;
+            let parsed = &brief.title;
             if parsed.trim().is_empty() {
                 String::new()
             } else {
@@ -155,7 +155,7 @@ pub fn brief(session: &dyn Sessioned) -> String {
         pending.map(|p| p.brief())
     };
     let (items, topic) = match info {
-        Some(brief) => (brief.items.clone(), brief.topic.clone()),
+        Some(brief) => (brief.questions.clone(), brief.title.clone()),
         None => (Vec::new(), String::new()),
     };
     let html = if !items.is_empty() {
@@ -211,7 +211,8 @@ impl Rendered for Document<'_> {
         let service_name = env::service(self.session.tasks());
         let sign = Signature::new(&author_name, &service_name);
         let note = sign.html();
-        let css_root = format!("{}/../../resources", env!("CARGO_MANIFEST_DIR"));
+        let css_root = std::env::var("RESOURCES_DIR")
+            .unwrap_or_else(|_| format!("{}/../../resources", env!("CARGO_MANIFEST_DIR")));
         let css_style = style::style(self.palette, &css_root);
         let css = css_style.css();
         let stamp = self.session.created().format("%Y-%m-%d").to_string();

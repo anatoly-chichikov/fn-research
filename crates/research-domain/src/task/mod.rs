@@ -1,7 +1,7 @@
 use chrono::NaiveDateTime;
 use std::collections::HashMap;
 
-use crate::brief::{self, Brief, Node};
+use crate::brief::{self, Brief, Question};
 use crate::result::{self, Report};
 
 /// Object representing a research task.
@@ -48,7 +48,6 @@ pub struct ResearchRun {
     code: String,
     content: Brief,
     status: String,
-    lang: String,
     service: String,
     processor: String,
     stamp: NaiveDateTime,
@@ -66,7 +65,7 @@ impl Tasked for ResearchRun {
     }
 
     fn query(&self) -> String {
-        brief::render(&self.content, &self.lang)
+        brief::render(&self.content)
     }
 
     fn status(&self) -> &str {
@@ -78,7 +77,7 @@ impl Tasked for ResearchRun {
     }
 
     fn language(&self) -> &str {
-        &self.lang
+        &self.content.language
     }
 
     fn provider(&self) -> &str {
@@ -98,7 +97,6 @@ impl Tasked for ResearchRun {
             code: self.code.clone(),
             content: self.content.clone(),
             status: "completed".to_string(),
-            lang: self.lang.clone(),
             service: self.service.clone(),
             processor: self.processor.clone(),
             stamp: self.stamp,
@@ -119,7 +117,7 @@ impl Tasked for ResearchRun {
         );
         map.insert(
             "language".to_string(),
-            serde_json::Value::String(self.lang.clone()),
+            serde_json::Value::String(self.content.language.clone()),
         );
         map.insert(
             "service".to_string(),
@@ -148,7 +146,7 @@ impl Tasked for ResearchRun {
 
 /// Create task from JSON value.
 pub fn task(item: &serde_json::Value) -> ResearchRun {
-    let text = item
+    let language = item
         .get("language")
         .and_then(|v| v.as_str())
         .unwrap_or("\u{0440}\u{0443}\u{0441}\u{0441}\u{043a}\u{0438}\u{0439}");
@@ -169,16 +167,33 @@ pub fn task(item: &serde_json::Value) -> ResearchRun {
         .and_then(|v| v.as_str())
         .or_else(|| item.get("query").and_then(|v| v.as_str()))
         .unwrap_or("");
-    let explicit_topic = entry
-        .and_then(|e| e.get("topic"))
+    let explicit_title = entry
+        .and_then(|e| e.get("title"))
         .and_then(|v| v.as_str())
+        .or_else(|| entry.and_then(|e| e.get("topic")).and_then(|v| v.as_str()))
         .or_else(|| item.get("topic").and_then(|v| v.as_str()));
-    let explicit_items = entry
-        .and_then(|e| e.get("items"))
+    let explicit_questions = entry
+        .and_then(|e| e.get("questions"))
         .and_then(|v| v.as_array())
         .filter(|a| !a.is_empty())
-        .map(|arr| arr.iter().map(json_to_node).collect::<Vec<Node>>());
-    let content = brief::parse(query_text, explicit_topic, explicit_items.as_deref());
+        .map(|arr| arr.iter().map(json_to_question).collect::<Vec<Question>>())
+        .or_else(|| {
+            entry
+                .and_then(|e| e.get("items"))
+                .and_then(|v| v.as_array())
+                .filter(|a| !a.is_empty())
+                .map(|arr| arr.iter().map(json_to_question).collect::<Vec<Question>>())
+        });
+    let brief_language = entry
+        .and_then(|e| e.get("language"))
+        .and_then(|v| v.as_str())
+        .unwrap_or(language);
+    let content = brief::parse(
+        query_text,
+        brief_language,
+        explicit_title,
+        explicit_questions.as_deref(),
+    );
     let raw = item.get("result");
     let value = result::result(raw);
     let code = item
@@ -195,7 +210,6 @@ pub fn task(item: &serde_json::Value) -> ResearchRun {
             .and_then(|v| v.as_str())
             .unwrap_or("")
             .to_string(),
-        lang: text.to_string(),
         service: name.to_string(),
         processor: processor.to_string(),
         stamp: time,
@@ -214,19 +228,21 @@ fn normalize_provider(name: &str) -> String {
     }
 }
 
-/// Convert JSON value to Node.
-fn json_to_node(value: &serde_json::Value) -> Node {
-    let text = value
-        .get("text")
+/// Convert JSON value to Question.
+fn json_to_question(value: &serde_json::Value) -> Question {
+    let scope = value
+        .get("scope")
         .and_then(|v| v.as_str())
+        .or_else(|| value.get("text").and_then(|v| v.as_str()))
         .unwrap_or("")
         .to_string();
-    let items = value
-        .get("items")
+    let details = value
+        .get("details")
         .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().map(json_to_node).collect())
+        .or_else(|| value.get("items").and_then(|v| v.as_array()))
+        .map(|arr| arr.iter().map(json_to_question).collect())
         .unwrap_or_default();
-    Node { text, items }
+    Question { scope, details }
 }
 
 #[cfg(test)]

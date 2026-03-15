@@ -1,22 +1,24 @@
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-/// Brief item node with text and nested items.
+/// Research question with scope and sub-questions.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct Node {
-    /// Item text.
-    pub text: String,
-    /// Nested items.
-    pub items: Vec<Node>,
+pub struct Question {
+    /// Research scope.
+    pub scope: String,
+    /// Sub-questions decomposition.
+    pub details: Vec<Question>,
 }
 
 /// Structured research brief.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Brief {
-    /// Brief topic.
-    pub topic: String,
-    /// Root items.
-    pub items: Vec<Node>,
+    /// Research title.
+    pub title: String,
+    /// Result language.
+    pub language: String,
+    /// Root research questions.
+    pub questions: Vec<Question>,
 }
 
 /// Flat item with depth level for intermediate parsing.
@@ -25,24 +27,35 @@ struct Flat {
     text: String,
 }
 
-/// Normalize brief item map.
-pub fn node(item: &Node) -> Node {
-    let text = item.text.trim().to_string();
-    let items: Vec<Node> = item
-        .items
+/// Normalize brief question.
+pub fn question(item: &Question) -> Question {
+    let scope = item.scope.trim().to_string();
+    let details: Vec<Question> = item
+        .details
         .iter()
-        .map(node)
-        .filter(|n| !(n.text.is_empty() && n.items.is_empty()))
+        .map(question)
+        .filter(|n| !(n.scope.is_empty() && n.details.is_empty()))
         .collect();
-    Node { text, items }
+    Question { scope, details }
 }
 
-/// Create node from plain text string.
-pub fn leaf(text: &str) -> Node {
-    Node {
-        text: text.trim().to_string(),
-        items: Vec::new(),
+/// Create question from plain text string.
+pub fn leaf(text: &str) -> Question {
+    Question {
+        scope: text.trim().to_string(),
+        details: Vec::new(),
     }
+}
+
+/// Encode brief into RON string.
+pub fn encode(brief: &Brief) -> String {
+    ron::ser::to_string_pretty(brief, ron::ser::PrettyConfig::default())
+        .expect("Brief RON serialization must not fail")
+}
+
+/// Decode RON string into brief.
+pub fn decode(text: &str) -> Result<Brief, String> {
+    ron::from_str(text).map_err(|e| format!("RON parse error: {}", e))
 }
 
 /// Check if line is a numbered or bullet item.
@@ -129,7 +142,7 @@ fn scan(lines: &[&str]) -> Vec<Flat> {
 }
 
 /// Insert item at depth.
-fn place(items: &mut Vec<Node>, depth: usize, item: Node) {
+fn place(items: &mut Vec<Question>, depth: usize, item: Question) {
     let depth = if depth > 1 && items.is_empty() {
         1
     } else {
@@ -139,23 +152,23 @@ fn place(items: &mut Vec<Node>, depth: usize, item: Node) {
         items.push(item);
     } else {
         if items.is_empty() {
-            items.push(Node {
-                text: String::new(),
-                items: Vec::new(),
+            items.push(Question {
+                scope: String::new(),
+                details: Vec::new(),
             });
         }
         let last = items.last_mut().unwrap();
-        place(&mut last.items, depth - 1, item);
+        place(&mut last.details, depth - 1, item);
     }
 }
 
 /// Nest flat items into tree.
-fn nest(list: &[Flat]) -> Vec<Node> {
-    let mut items: Vec<Node> = Vec::new();
+fn nest(list: &[Flat]) -> Vec<Question> {
+    let mut items: Vec<Question> = Vec::new();
     for flat in list {
-        let n = Node {
-            text: flat.text.clone(),
-            items: Vec::new(),
+        let n = Question {
+            scope: flat.text.clone(),
+            details: Vec::new(),
         };
         place(&mut items, flat.depth, n);
     }
@@ -163,11 +176,11 @@ fn nest(list: &[Flat]) -> Vec<Node> {
 }
 
 /// Render nested items into numbered list.
-fn lines(items: &[Node], prefix: &str) -> Vec<String> {
+fn lines(items: &[Question], prefix: &str) -> Vec<String> {
     let mut list: Vec<String> = Vec::new();
     for (idx, item) in items.iter().enumerate() {
-        let text = item.text.trim();
-        let nested = &item.items;
+        let text = item.scope.trim();
+        let nested = &item.details;
         let num = if prefix.is_empty() {
             format!("{}", idx + 1)
         } else {
@@ -193,25 +206,25 @@ fn lines(items: &[Node], prefix: &str) -> Vec<String> {
 }
 
 /// Render brief into query text.
-pub fn render(brief: &Brief, language: &str) -> String {
-    let lang = language.trim();
+pub fn render(brief: &Brief) -> String {
+    let lang = brief.language.trim();
     let lead = if lang.is_empty() {
         String::new()
     } else {
         format!("\u{042f}\u{0437}\u{044b}\u{043a} \u{043e}\u{0442}\u{0432}\u{0435}\u{0442}\u{0430}: {}.", lang)
     };
-    let topic = &brief.topic;
-    let items: Vec<Node> = brief.items.iter().map(node).collect();
+    let title = &brief.title;
+    let items: Vec<Question> = brief.questions.iter().map(question).collect();
     let rows = lines(&items, "");
     let tail = rows.join("\n");
     let body = if !rows.is_empty() {
-        if topic.is_empty() {
+        if title.is_empty() {
             format!("Research:\n{}", tail)
         } else {
-            format!("{}\n\nResearch:\n{}", topic, tail)
+            format!("{}\n\nResearch:\n{}", title, tail)
         }
     } else {
-        topic.clone()
+        title.clone()
     };
     if !lead.is_empty() && !body.is_empty() {
         format!("{}\n\n{}", lead, body)
@@ -223,7 +236,12 @@ pub fn render(brief: &Brief, language: &str) -> String {
 }
 
 /// Parse query text into Brief structure.
-pub fn parse(query: &str, explicit_topic: Option<&str>, explicit_items: Option<&[Node]>) -> Brief {
+pub fn parse(
+    query: &str,
+    language: &str,
+    explicit_title: Option<&str>,
+    explicit_questions: Option<&[Question]>,
+) -> Brief {
     let rows: Vec<&str> = query.lines().collect();
     let label = "Research:";
     let spot = rows.iter().position(|line| line.trim() == label);
@@ -252,29 +270,34 @@ pub fn parse(query: &str, explicit_topic: Option<&str>, explicit_items: Option<&
             line.trim().to_string()
         }
     });
-    let topic = explicit_topic.map(|s| s.to_string()).unwrap_or(top);
-    let items = match explicit_items {
+    let title = explicit_title.map(|s| s.to_string()).unwrap_or(top);
+    let questions = match explicit_questions {
         Some(explicit) if !explicit.is_empty() => explicit.to_vec(),
         _ => list,
     };
-    let items: Vec<Node> = items.iter().map(node).collect();
-    Brief { topic, items }
+    let questions: Vec<Question> = questions.iter().map(question).collect();
+    Brief {
+        title,
+        language: language.to_string(),
+        questions,
+    }
 }
 
-/// Serialize brief for data output (without :text key).
+/// Serialize brief for data output.
 pub fn data(brief: &Brief) -> serde_json::Value {
-    let items: Vec<serde_json::Value> = brief.items.iter().map(node_to_value).collect();
+    let questions: Vec<serde_json::Value> = brief.questions.iter().map(question_to_value).collect();
     serde_json::json!({
-        "topic": brief.topic,
-        "items": items,
+        "title": brief.title,
+        "language": brief.language,
+        "questions": questions,
     })
 }
 
-/// Convert node to JSON value.
-fn node_to_value(n: &Node) -> serde_json::Value {
-    let items: Vec<serde_json::Value> = n.items.iter().map(node_to_value).collect();
+/// Convert question to JSON value.
+fn question_to_value(n: &Question) -> serde_json::Value {
+    let details: Vec<serde_json::Value> = n.details.iter().map(question_to_value).collect();
     serde_json::json!({
-        "text": n.text,
-        "items": items,
+        "scope": n.scope,
+        "details": details,
     })
 }

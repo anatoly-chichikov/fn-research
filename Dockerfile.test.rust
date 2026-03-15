@@ -1,7 +1,12 @@
-FROM rust:bookworm
-
+FROM lukemathwalker/cargo-chef:latest-rust-latest AS chef
 WORKDIR /app
 
+FROM chef AS planner
+COPY Cargo.toml Cargo.lock ./
+COPY crates ./crates
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef AS builder
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
@@ -21,24 +26,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-dejavu \
     fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
-
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 RUN uv run --with weasyprint python -c "import weasyprint"
-
 RUN mkdir -p /usr/local/share/fonts/source-serif-pro \
   && curl -L -o /usr/local/share/fonts/source-serif-pro/SourceSerifPro-Regular.ttf https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserifpro/SourceSerifPro-Regular.ttf \
   && curl -L -o /usr/local/share/fonts/source-serif-pro/SourceSerifPro-Italic.ttf https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserifpro/SourceSerifPro-Italic.ttf \
   && curl -L -o /usr/local/share/fonts/source-serif-pro/SourceSerifPro-SemiBold.ttf https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserifpro/SourceSerifPro-SemiBold.ttf \
   && curl -L -o /usr/local/share/fonts/source-serif-pro/SourceSerifPro-Bold.ttf https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserifpro/SourceSerifPro-Bold.ttf \
   && fc-cache -f
-
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --tests --recipe-path recipe.json
 COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
 COPY resources ./resources
 COPY baseline-research ./baseline-research
 COPY pyproject.toml ./pyproject.toml
-
 RUN cargo build --tests 2>&1
-
 ENTRYPOINT ["cargo", "test", "--workspace"]

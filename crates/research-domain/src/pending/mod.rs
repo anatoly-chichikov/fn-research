@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::brief::{self, Brief, Node};
+use crate::brief::{self, Brief, Question};
 
 /// Object with pending run details.
 pub trait Pendinged {
@@ -26,7 +26,6 @@ pub struct PendingRun {
     code: String,
     content: Brief,
     proc: String,
-    lang: String,
     prov: String,
 }
 
@@ -40,7 +39,7 @@ impl Pendinged for PendingRun {
     }
 
     fn query(&self) -> String {
-        brief::render(&self.content, &self.lang)
+        brief::render(&self.content)
     }
 
     fn processor(&self) -> &str {
@@ -48,7 +47,7 @@ impl Pendinged for PendingRun {
     }
 
     fn language(&self) -> &str {
-        &self.lang
+        &self.content.language
     }
 
     fn provider(&self) -> &str {
@@ -67,7 +66,7 @@ impl Pendinged for PendingRun {
         );
         map.insert(
             "language".to_string(),
-            serde_json::Value::String(self.lang.clone()),
+            serde_json::Value::String(self.content.language.clone()),
         );
         map.insert(
             "provider".to_string(),
@@ -86,45 +85,63 @@ pub fn pending(item: &serde_json::Value) -> PendingRun {
         .and_then(|v| v.as_str())
         .or_else(|| item.get("query").and_then(|v| v.as_str()))
         .unwrap_or("");
-    let explicit_topic = entry
-        .and_then(|e| e.get("topic"))
+    let explicit_title = entry
+        .and_then(|e| e.get("title"))
         .and_then(|v| v.as_str())
+        .or_else(|| entry.and_then(|e| e.get("topic")).and_then(|v| v.as_str()))
         .or_else(|| item.get("topic").and_then(|v| v.as_str()));
-    let explicit_items = entry
-        .and_then(|e| e.get("items"))
+    let explicit_questions = entry
+        .and_then(|e| e.get("questions"))
         .and_then(|v| v.as_array())
         .filter(|a| !a.is_empty())
-        .map(|arr| arr.iter().map(json_to_node).collect::<Vec<Node>>());
-    let content = brief::parse(query_text, explicit_topic, explicit_items.as_deref());
+        .map(|arr| arr.iter().map(json_to_question).collect::<Vec<Question>>())
+        .or_else(|| {
+            entry
+                .and_then(|e| e.get("items"))
+                .and_then(|v| v.as_array())
+                .filter(|a| !a.is_empty())
+                .map(|arr| arr.iter().map(json_to_question).collect::<Vec<Question>>())
+        });
     let run_id = item.get("run_id").and_then(|v| v.as_str()).unwrap_or("");
     let processor = item.get("processor").and_then(|v| v.as_str()).unwrap_or("");
-    let language = item.get("language").and_then(|v| v.as_str()).unwrap_or("");
+    let language = entry
+        .and_then(|e| e.get("language"))
+        .and_then(|v| v.as_str())
+        .or_else(|| item.get("language").and_then(|v| v.as_str()))
+        .unwrap_or("");
     let provider = item
         .get("provider")
         .and_then(|v| v.as_str())
         .unwrap_or("parallel");
+    let content = brief::parse(
+        query_text,
+        language,
+        explicit_title,
+        explicit_questions.as_deref(),
+    );
     PendingRun {
         code: run_id.to_string(),
         content,
         proc: processor.to_string(),
-        lang: language.to_string(),
         prov: provider.to_string(),
     }
 }
 
-/// Convert JSON value to Node.
-fn json_to_node(value: &serde_json::Value) -> Node {
-    let text = value
-        .get("text")
+/// Convert JSON value to Question.
+fn json_to_question(value: &serde_json::Value) -> Question {
+    let scope = value
+        .get("scope")
         .and_then(|v| v.as_str())
+        .or_else(|| value.get("text").and_then(|v| v.as_str()))
         .unwrap_or("")
         .to_string();
-    let items = value
-        .get("items")
+    let details = value
+        .get("details")
         .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().map(json_to_node).collect())
+        .or_else(|| value.get("items").and_then(|v| v.as_array()))
+        .map(|arr| arr.iter().map(json_to_question).collect())
         .unwrap_or_default();
-    Node { text, items }
+    Question { scope, details }
 }
 
 #[cfg(test)]

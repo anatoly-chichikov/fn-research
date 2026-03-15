@@ -1,5 +1,5 @@
 use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 
 /// Return deterministic generator seeded with given value.
 pub fn ids(seed: u64) -> StdRng {

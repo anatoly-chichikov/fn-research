@@ -607,12 +607,12 @@ mod tests {
         let org = organizer::organizer(&out);
         let name = org.name(sess.created(), sess.topic(), sess.id());
         let folder = org.folder(&name, provider);
-        let path = folder.join("session.edn");
+        let path = folder.join("session.json");
         let content = std::fs::read_to_string(&path).unwrap();
         let data: serde_json::Value = serde_json::from_str(&content).unwrap();
         let item = &data["tasks"][0]["brief"];
-        let seen = item.get("topic").is_some()
-            && item.get("items").is_some()
+        let seen = item.get("title").is_some()
+            && item.get("questions").is_some()
             && item.get("text").is_none();
         assert!(seen, "Brief was not stored in session");
     }
@@ -632,12 +632,13 @@ mod tests {
         let stamp = task::format(&chrono::Local::now().naive_local());
         let ident = ids::uuid(&mut rng);
         let brief = serde_json::json!({
-            "topic": topic,
-            "items": [{
-                "text": text_val,
-                "items": [
-                    {"text": leaf, "items": []},
-                    {"text": node, "items": []},
+            "title": topic,
+            "language": language,
+            "questions": [{
+                "scope": text_val,
+                "details": [
+                    {"scope": leaf, "details": []},
+                    {"scope": node, "details": []},
                 ]
             }]
         });
@@ -670,19 +671,19 @@ mod tests {
         let org = organizer::organizer(&out);
         let name = org.name(sess.created(), sess.topic(), sess.id());
         let folder = org.folder(&name, provider);
-        let path = folder.join("session.edn");
+        let path = folder.join("session.json");
         let content = std::fs::read_to_string(&path).unwrap();
         let data: serde_json::Value = serde_json::from_str(&content).unwrap();
         let item = &data["tasks"][0]["brief"];
         let first = item
-            .get("items")
+            .get("questions")
             .and_then(|v| v.as_array())
             .and_then(|a| a.first());
         let nested = first
-            .and_then(|n| n.get("items"))
+            .and_then(|n| n.get("details"))
             .and_then(|v| v.as_array())
             .map(|a| !a.is_empty())
             .unwrap_or(false);
-        assert!(nested, "Nested brief items were not preserved");
+        assert!(nested, "Nested brief questions were not preserved");
     }
 }
