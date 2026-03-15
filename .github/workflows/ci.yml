@@ -62,7 +62,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.test.rust
+          file: Dockerfile.test
           load: true
           tags: research-test
           cache-from: type=gha,scope=integration

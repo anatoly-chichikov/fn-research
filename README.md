@@ -126,7 +126,7 @@ Use `all` as provider (e.g. `rs all ultra <topic>`) to run Parallel then Valyu i
 
 ### Requirements
 
-- Java 17+, Leiningen, Docker
+- Docker
 - An AI coding agent (Claude Code, Codex, Cursor, Junie)
 
 ### Environment variables
@@ -153,8 +153,8 @@ tst
 
 # Manual:
 docker build -t research-test -f Dockerfile.test .
-docker run --rm research-test :unit
-docker run --rm -v "$PWD/tmp_cache:/app/tmp_cache" research-test :integration
+docker run --rm research-test
+docker run --rm -v "$PWD/tmp_cache:/app/tmp_cache" -e REPORT_FOR research-test -- --ignored --test-threads=1
 ```
 
 ## License

@@ -341,7 +341,7 @@ notify pdf_path (full path)
 
 Run tests in Docker container.
 
-run docker build -t research-test -f Dockerfile.test.rust .
+run docker build -t research-test -f Dockerfile.test .
 run docker run --rm research-test
 run docker run --rm -v "$(pwd)/tmp_cache:/app/tmp_cache" -e REPORT_FOR research-test -- --ignored --test-threads=1
 

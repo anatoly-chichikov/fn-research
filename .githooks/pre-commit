@@ -24,11 +24,11 @@ if [ -z "${delta}" ]; then
 fi
 if ! docker image inspect research-test >/dev/null 2>&1; then
   build=1
-elif echo "${delta}" | grep -E -q '^(Cargo\.|crates/|Dockerfile\.test\.rust)'; then
+elif echo "${delta}" | grep -E -q '^(Cargo\.|crates/|Dockerfile\.test)'; then
   build=1
 fi
 if [ "${build}" -eq 1 ]; then
-  docker build -t research-test -f "${repo}/Dockerfile.test.rust" "${repo}"
+  docker build -t research-test -f "${repo}/Dockerfile.test" "${repo}"
 else
   echo "Skipping docker build because no relevant changes"
 fi
