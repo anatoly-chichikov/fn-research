@@ -21,4 +21,5 @@ uuid = { workspace = true }
 [dev-dependencies]
 tempfile = { workspace = true }
 image = { workspace = true }
+ron = { workspace = true }
 research-domain = { path = "../research-domain", features = ["test-support"] }

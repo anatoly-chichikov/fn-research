@@ -2275,6 +2275,7 @@ dependencies = [
  "research-image",
  "research-pdf",
  "research-storage",
+ "ron",
  "serde_json",
  "tempfile",
  "uuid",

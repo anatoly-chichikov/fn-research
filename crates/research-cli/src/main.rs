@@ -271,7 +271,7 @@ mod tests {
     use research_api::traits::Researchable;
     use research_domain::ids;
     use research_domain::pending::Pendinged;
-    use research_domain::session::{self, Sessioned};
+    use research_domain::session::{self, ResearchSession, Sessioned};
     use research_domain::task::{self, Tasked};
     use research_storage::organizer::{self, Organized};
     use research_storage::repository::{self, Loadable, Savable};
@@ -699,8 +699,9 @@ mod tests {
     #[ignore]
     fn the_application_generates_pdf_screenshots() {
         let base = std::path::PathBuf::from("baseline-research");
-        let brief_text = std::fs::read_to_string(base.join("brief-parallel.ron")).unwrap();
-        let brief_obj = research_domain::brief::decode(&brief_text).unwrap();
+        let session_text = std::fs::read_to_string(base.join("session.ron")).unwrap();
+        let baseline: ResearchSession = ron::from_str(&session_text).unwrap();
+        let pend_ref = baseline.pending().unwrap();
         let raw: serde_json::Value = serde_json::from_str(
             &std::fs::read_to_string(base.join("response-parallel.json")).unwrap(),
         )
@@ -736,14 +737,14 @@ mod tests {
         let stamp = task::format(&chrono::Local::now().naive_local());
         let entry = serde_json::json!({
             "run_id": run_code,
-            "brief": research_domain::brief::data(&brief_obj),
+            "brief": research_domain::brief::data(pend_ref.brief()),
             "processor": "pro",
             "language": lang,
             "provider": "parallel",
         });
         let sess = session::session(&serde_json::json!({
             "id": ident,
-            "topic": "Clojure production pain points",
+            "topic": baseline.topic(),
             "tasks": [],
             "created": stamp,
             "pending": entry,

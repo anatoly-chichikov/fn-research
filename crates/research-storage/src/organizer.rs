@@ -13,8 +13,6 @@ pub trait Organized {
     fn response(&self, name: &str, provider: &str, data: &serde_json::Value) -> PathBuf;
     /// Return cover path.
     fn cover(&self, name: &str, provider: &str) -> PathBuf;
-    /// Return brief RON path.
-    fn brief(&self, name: &str, provider: &str) -> PathBuf;
     /// Return report path.
     fn report(&self, name: &str, provider: &str) -> PathBuf;
     /// Return html path.
@@ -151,17 +149,6 @@ impl Organized for Organizer {
         };
         let dir = self.folder(name, provider);
         dir.join(format!("cover-{}.jpg", tag))
-    }
-
-    fn brief(&self, name: &str, provider: &str) -> PathBuf {
-        let tag = slug(provider);
-        let tag = if tag.is_empty() {
-            "provider".to_string()
-        } else {
-            tag
-        };
-        let dir = self.folder(name, provider);
-        dir.join(format!("brief-{}.ron", tag))
     }
 
     fn report(&self, name: &str, provider: &str) -> PathBuf {

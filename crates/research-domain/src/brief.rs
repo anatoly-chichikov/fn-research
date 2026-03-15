@@ -53,11 +53,6 @@ pub fn encode(brief: &Brief) -> String {
         .expect("Brief RON serialization must not fail")
 }
 
-/// Decode RON string into brief.
-pub fn decode(text: &str) -> Result<Brief, String> {
-    ron::from_str(text).map_err(|e| format!("RON parse error: {}", e))
-}
-
 /// Check if line is a numbered or bullet item.
 fn marker(line: &str) -> bool {
     let trim = line.trim();
