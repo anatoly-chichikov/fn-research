@@ -698,7 +698,8 @@ mod tests {
     #[test]
     #[ignore]
     fn the_application_generates_pdf_screenshots() {
-        let base = std::path::PathBuf::from("baseline-research");
+        let base =
+            std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../baseline-research");
         let session_text = std::fs::read_to_string(base.join("session.ron")).unwrap();
         let baseline: ResearchSession = ron::from_str(&session_text).unwrap();
         let pend_ref = baseline.pending().unwrap();
