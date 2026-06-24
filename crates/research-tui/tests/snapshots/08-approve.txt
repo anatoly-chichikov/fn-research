@@ -1,0 +1,44 @@
+
+  approve   final review before launch                                                                                                             IN SYNC
+  ───────
+  READY TO LAUNCH
+  Quantum computing
+
+  You want a sober map of where quantum computing really is — what runs today, what doesn't, and what would change your mind.
+
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  1   Where is quantum computing actually today?
+
+      1.1 Which qubit modality is winning, and why?
+      1.2 What did the latest "advantage" result really prove?
+      1.3 What is the real bottleneck right now?
+
+  2   Is fault tolerance close, or still a wall?
+
+      2.1 Surface vs. LDPC vs. cat qubits — which scales?
+      2.2 What did Google's Willow actually show?
+      2.3 A sober timeline to breaking real crypto?
+
+  3   What could we run that classical can't?
+
+      3.1 Which algorithms keep their speedup end-to-end?
+      3.2 Why is simulation the most credible early use?
+      3.3 Who is funding it, and what is the bet?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  [↵] launch   [esc] back                                                                                                                         [?] keys
+

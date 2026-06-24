@@ -1,0 +1,44 @@
+
+  sessions   past research runs
+  ────────
+   sessions
+
+    #041abcd1  AI transformation of academic research   parallel · ultra  ✓ done  06 May  14:02
+  ▶ #040c12fa  Rust ownership model for systems people   parallel · ultra  ✓ done  04 May  09:31
+    #039b2110  Gut-microbiome × longevity protocols   valyu · standard  ✓ done  02 May  18:44
+    #037e8c30  Why container shipping rates collapsed   xai · full  ✗ failed  27 Apr  11:08
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  [↑↓] navigate   [esc] back                                                                                                                      [?] keys
+

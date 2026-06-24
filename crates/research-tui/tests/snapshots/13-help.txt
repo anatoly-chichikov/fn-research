@@ -1,0 +1,44 @@
+
+
+
+
+
+
+
+
+
+
+
+
+                                             ┌ shortcuts ─────────────────────────────────────────────────────┐
+                                             │  j / k     move angle (tune) / take (history)                  │
+                                             │  tab       next knob in the angle                              │
+                                             │  ← / →     adjust the focused knob ±1                          │
+                                             │  d n a     jump to depth / novelty / applied                   │
+                                             │  ↵         regenerate (when stale) / restore (history)         │
+                                             │  a         approve the current take                            │
+                                             │  H         focus the iteration history                         │
+                                             │  space     peek a take's diff (history)                        │
+                                             │  u         revert pending knob edits                           │
+                                             │  e         edit the focused angle title                        │
+                                             │  esc       back / cancel                                       │
+                                             │  F1 F2     sessions · keys                                     │
+                                             │  ?         toggle this help                                    │
+                                             │  ⌃C        quit                                                │
+                                             │                                                                │
+                                             │                                                                │
+                                             │                                                                │
+                                             │                                                                │
+                                             └────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+

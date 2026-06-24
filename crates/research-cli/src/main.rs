@@ -30,14 +30,20 @@ pub struct Options {
     pub provider: Provider,
     /// Output HTML instead of PDF.
     pub html: bool,
+    /// TUI mock mode — no Gemini call, no real detached spawn.
+    pub mock: bool,
+    /// Output directory for the screenshot tour.
+    pub tour_out: Option<String>,
 }
 
 /// Parse CLI arguments.
 pub fn parse(args: &[&str]) -> Parsed {
     let mut processor = "pro".to_string();
-    let mut language = "\u{0440}\u{0443}\u{0441}\u{0441}\u{043a}\u{0438}\u{0439}".to_string();
+    let mut language = "English".to_string();
     let mut provider_text = "parallel".to_string();
     let mut html = false;
+    let mut mock = false;
+    let mut tour_out: Option<String> = None;
     let mut positional = Vec::new();
     let mut idx = 0;
     while idx < args.len() {
@@ -54,8 +60,15 @@ pub fn parse(args: &[&str]) -> Parsed {
                 idx += 1;
                 provider_text = args[idx].to_string();
             }
+            "--out" if idx + 1 < args.len() => {
+                idx += 1;
+                tour_out = Some(args[idx].to_string());
+            }
             "--html" => {
                 html = true;
+            }
+            "--mock" => {
+                mock = true;
             }
             other => {
                 positional.push(other.to_string());
@@ -71,6 +84,8 @@ pub fn parse(args: &[&str]) -> Parsed {
         language,
         provider,
         html,
+        mock,
+        tour_out,
     };
     let cmd = positional.first().cloned().unwrap_or_default();
     let tail: Vec<String> = positional.into_iter().skip(1).collect();
@@ -237,6 +252,8 @@ fn main() {
     let refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
     let data = parse(&refs);
     match data.cmd.as_str() {
+        "" => launch_tui(&root, data.opts.mock),
+        "tour" => run_tour(&root, data.opts.tour_out.as_deref()),
         "list" => app.list(),
         "show" => app.show(data.tail.first().map(|s| s.as_str()).unwrap_or("")),
         "generate" => app.generate(
@@ -261,6 +278,42 @@ fn main() {
             &data.opts.provider,
         ),
         _ => println!("Unknown command"),
+    }
+}
+
+/// Launch the interactive console UI.
+fn launch_tui(root: &Path, mock: bool) {
+    let opts = research_tui::RunOptions {
+        mock,
+        root: root.to_path_buf(),
+    };
+    if let Err(e) = research_tui::run(opts) {
+        eprintln!("tui error: {e}");
+        std::process::exit(1);
+    }
+}
+
+/// Run the screenshot tour, writing PNGs to a chosen directory.
+fn run_tour(root: &Path, out: Option<&str>) {
+    let dir = match out {
+        Some(p) => std::path::PathBuf::from(p),
+        None => {
+            let stamp = chrono::Local::now().format("%Y%m%d-%H%M%S").to_string();
+            root.join("output").join(format!("_tour-{stamp}"))
+        }
+    };
+    match research_tui::tour(dir) {
+        Ok(summary) => {
+            println!(
+                "wrote {} screenshots to {}",
+                summary.shots.len(),
+                summary.out_dir.display()
+            );
+        }
+        Err(e) => {
+            eprintln!("tour error: {e}");
+            std::process::exit(1);
+        }
     }
 }
 

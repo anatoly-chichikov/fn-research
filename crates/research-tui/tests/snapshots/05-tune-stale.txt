@@ -1,0 +1,44 @@
+
+  tune   set the depth of each angle, then regenerate                                                                                      STALE  · 1 EDIT
+  ────
+  TOPIC    Quantum computing
+  INTENT   You want a sober map of where quantum computing really is — what runs today, what doesn't, and what would change your mind.
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+  ▏ 1  Where is quantum computing actually today?
+  ▏     Headlines vs. what the machines really run.
+  ▏     1.1  Which qubit modality is winning, and why?                                                                     DEPTH    ███████████████  4/5
+  ▏     1.2  What did the latest "advantage" result really prove?                                                          NOVELTY  ███████████████  4/5
+  ▏     1.3  What is the real bottleneck right now?                                                                        APPLIED  ███████████████  3/5
+
+  ▏ 2  Is fault tolerance close, or still a wall?
+  ▏     Error correction is the only path — how steep?
+  ▏     2.1  Surface vs. LDPC vs. cat qubits — which scales?                                                               DEPTH    ███████████████  5/5
+  ▏     2.2  What did Google's Willow actually show?                                                                       NOVELTY  ███████████████  4/5
+  ▏     2.3  A sober timeline to breaking real crypto?                                                                     APPLIED  ███████████████  3/5
+
+  ▌ 3  What could we run that classical can't?                                                                                                ↵ regenerate
+  ▌     Which speedups survive the full pipeline.
+  ▌     3.1  Which algorithms keep their speedup end-to-end?                                                               DEPTH   «███████████████» 5/5 •
+  ▌     3.2  Why is simulation the most credible early use?                                                                NOVELTY  ███████████████  3/5
+  ▌     3.3  Who is funding it, and what is the bet?                                                                       APPLIED  ███████████████  5/5
+
+
+  v3 / 3 takes   [H] history
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  [↑↓] move   [←→] tune   [Ctrl+G] regenerate   [H] history   [e] edit   [esc] back                                                               [?] keys
+

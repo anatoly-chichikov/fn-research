@@ -1,0 +1,44 @@
+
+  tune   set the depth of each angle, then regenerate                                                                                              IN SYNC
+  ────
+  history                                                                                               pick a take to roll back to — later takes are kept
+  ───────
+
+  ▌ v1  first pass                        333 432 324
+
+    v2  deeper · more applied             433 542 335
+
+    v3  newer · applied lens              443 543 435  BASE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  [↑↓] take   [↵] restore   [space] peek   [esc] back                                                                                             [?] keys
+

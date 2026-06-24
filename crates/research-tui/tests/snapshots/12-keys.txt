@@ -1,0 +1,44 @@
+
+  keys   api keys in the environment
+  ────
+   connections
+
+  keys are read from your shell environment. set or unset them outside the TUI.
+
+
+   PARALLEL_API_KEY   *    ••••••••a3f2    ✓ active
+   VALYU_API_KEY      *    not set    required
+   XAI_API_KEY        opt  not set    — optional
+   GEMINI_API_KEY     opt  ••••••••dQ    ✓ active
+   REPORT_FOR         opt  not set    — optional
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  [esc] back                                                                                                                                      [?] keys
+

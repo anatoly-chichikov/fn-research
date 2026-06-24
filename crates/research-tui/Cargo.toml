@@ -1,0 +1,22 @@
+[package]
+name = "research-tui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+research-domain = { path = "../research-domain" }
+research-storage = { path = "../research-storage" }
+ratatui = { workspace = true }
+crossterm = { workspace = true }
+ab_glyph = { workspace = true }
+unicode-width = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+reqwest = { workspace = true }
+uuid = { workspace = true }
+image = { workspace = true }
+libc = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

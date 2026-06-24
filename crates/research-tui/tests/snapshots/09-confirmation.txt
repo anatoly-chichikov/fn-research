@@ -1,0 +1,44 @@
+
+  launched   the research is running
+  ────────
+
+
+
+
+
+
+
+
+
+
+
+
+                                           ┌ launched ──────────────────────────────────────────────────────────┐
+                                           │  session   3e4fc072                                                │
+                                           │  topic     Quantum computing                                       │
+                                           │  provider  parallel · ultra                                        │
+                                           │  language  English                                                 │
+                                           │                                                                    │
+                                           │  output    ./output/2026-06-24_quantum-computing_3e4fc072          │
+                                           │  log       ./output/run-3e4fc072.log                               │
+                                           │  pid       —  (mock — no child spawned)                            │
+                                           │                                                                    │
+                                           │  press any key — start another                                     │
+                                           │                                                                    │
+                                           │                                                                    │
+                                           └────────────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+
+
+
+
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  [↵] start another                                                                                                                               [?] keys
+

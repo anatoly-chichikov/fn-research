@@ -14,7 +14,10 @@ pub fn seed(
     provider: &str,
 ) -> String {
     let repo = repository::repo(data);
-    let id = uuid::Uuid::new_v4().to_string();
+    let id = std::env::var("RESEARCH_SESSION_ID")
+        .ok()
+        .filter(|s| uuid::Uuid::parse_str(s).is_ok())
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
     let now = chrono::Local::now().naive_local();
     let stamp = task::format(&now);
     let value = serde_json::json!({

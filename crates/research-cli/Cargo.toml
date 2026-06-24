@@ -13,6 +13,7 @@ research-api = { path = "../research-api" }
 research-storage = { path = "../research-storage" }
 research-pdf = { path = "../research-pdf" }
 research-image = { path = "../research-image" }
+research-tui = { path = "../research-tui" }
 chrono = { workspace = true }
 reqwest = { workspace = true }
 serde_json = { workspace = true }
